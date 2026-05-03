@@ -17,15 +17,20 @@ export function InputPanel({ scenario, onChange }: Props) {
 
         {/* Col 1: primary money inputs */}
         <div className="flex flex-col gap-3">
-          <MoneyInput
-            label="Ingreso mensual neto"
-            value={scenario.netMonthlyIncomeAmount}
-            unit={scenario.netMonthlyIncomeUnit}
-            onValueChange={(v) => onChange({ netMonthlyIncomeAmount: v })}
-            onUnitChange={(u: MoneyUnit) => onChange({ netMonthlyIncomeUnit: u })}
-            placeholder={scenario.netMonthlyIncomeUnit === "CLP" ? "ej. 2.500.000" : "ej. 62,3"}
-            tooltipTermId="carga-financiera"
-          />
+          <div>
+            <MoneyInput
+              label="Ingreso mensual neto"
+              value={scenario.netMonthlyIncomeAmount}
+              unit={scenario.netMonthlyIncomeUnit}
+              onValueChange={(v) => onChange({ netMonthlyIncomeAmount: v })}
+              onUnitChange={(u: MoneyUnit) => onChange({ netMonthlyIncomeUnit: u })}
+              placeholder={scenario.netMonthlyIncomeUnit === "CLP" ? "ej. 2.500.000" : "ej. 62,3"}
+              tooltipTermId="carga-financiera"
+            />
+            <p className="mt-1 text-[11px] text-slate-400">
+              Puedes sumar el ingreso de tu pareja o co-deudor.
+            </p>
+          </div>
 
           {mode === "income" && (
             <MoneyInput

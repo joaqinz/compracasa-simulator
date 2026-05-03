@@ -3,17 +3,20 @@ import type { ScenarioInput, UFMetadata } from "@/types/finance";
 import defaults from "@/data/defaultAssumptions.json";
 import { runScenario, deriveAffordabilityStatus } from "@/lib/affordability";
 import {
-  generatePropertyPriceRange,
-  generateTermComparison,
   generateRateSensitivity,
-  generateHeatmapData,
   generateSensitivityTable,
   generatePieRateSensitivity,
+  generateTermMaxProperty,
+  generateRateMaxProperty,
 } from "@/lib/sensitivity";
 import { getUFValue } from "@/lib/ufService";
 import { encodeScenarioToURL, decodeScenarioFromURL } from "@/lib/urlParams";
 import { toUF } from "@/lib/money";
 import { firstBankPreset } from "@/lib/bankPresets";
+
+const FINE_RATE_OFFSETS = Array.from({ length: 41 }, (_, i) =>
+  parseFloat((-1.0 + i * 0.05).toFixed(2))
+);
 
 import { UFStatusBar } from "@/components/UFStatusBar";
 import { ModeSelector } from "@/components/ModeSelector";
@@ -85,16 +88,10 @@ const initialState: AppState = {
   ufError: false,
 };
 
-const PRICE_RANGE: [number, number] = [
-  defaults.sensitivityPriceRangeMinUF,
-  defaults.sensitivityPriceRangeMaxUF,
-];
-
 export function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { scenario, ufMetadata, ufLoading, ufError } = state;
 
-  // Load URL params on mount
   useEffect(() => {
     if (window.location.search) {
       const patch = decodeScenarioFromURL(window.location.search);
@@ -102,7 +99,6 @@ export function App() {
     }
   }, []);
 
-  // Fetch UF on mount
   useEffect(() => {
     dispatch({ type: "SET_UF_LOADING" });
     getUFValue().then((meta) => {
@@ -113,7 +109,40 @@ export function App() {
   }, []);
 
   function handleChange(patch: Partial<ScenarioInput>) {
-    dispatch({ type: "UPDATE_SCENARIO", patch });
+    dispatch({ type: "UPDATE_SCENARIO", patch: syncSavingsPie(patch, scenario, output) });
+  }
+
+  function syncSavingsPie(
+    patch: Partial<ScenarioInput>,
+    current: ScenarioInput,
+    out: typeof output
+  ): Partial<ScenarioInput> {
+    if (current.mode !== "income") return patch;
+    if (!out.maxPropertyByIncomeUF || out.maxPropertyByIncomeUF <= 0) return patch;
+
+    const maxLoanUF = out.maxPropertyByIncomeUF * (1 - current.downPaymentPct / 100);
+    const savingsChanged = ("savingsAmount" in patch || "savingsUnit" in patch) && !("downPaymentPct" in patch);
+    const pieChanged = "downPaymentPct" in patch && !("savingsAmount" in patch);
+
+    if (savingsChanged) {
+      const amount = patch.savingsAmount ?? current.savingsAmount;
+      const unit = patch.savingsUnit ?? current.savingsUnit;
+      if (amount != null && amount > 0) {
+        const savingsUF = unit === "UF" ? amount : amount / current.ufValueCLP;
+        const rawPct = (savingsUF / (maxLoanUF + savingsUF)) * 100;
+        const clamped = Math.max(10, Math.min(40, Math.round(rawPct / 5) * 5));
+        return { ...patch, downPaymentPct: clamped };
+      }
+    }
+
+    if (pieChanged) {
+      const newPie = patch.downPaymentPct!;
+      const newMaxPropertyUF = maxLoanUF / (1 - newPie / 100);
+      const impliedSavingsCLP = Math.round(newMaxPropertyUF * (newPie / 100) * current.ufValueCLP);
+      return { ...patch, savingsAmount: impliedSavingsCLP, savingsUnit: "CLP" };
+    }
+
+    return patch;
   }
 
   function handleManualUF(value: number) {
@@ -135,16 +164,6 @@ export function App() {
   const output = useMemo(() => runScenario(scenario), [scenario]);
   const status = useMemo(() => deriveAffordabilityStatus(output, scenario), [output, scenario]);
 
-  const affordabilityData = useMemo(
-    () => generatePropertyPriceRange(scenario, defaults.sensitivityDownPaymentPcts, PRICE_RANGE, defaults.sensitivityPriceSteps),
-    [scenario.annualRatePct, scenario.termYears, scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct, scenario.maxFinancingPct, scenario.ufValueCLP] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  const termData = useMemo(
-    () => generateTermComparison(scenario, defaults.sensitivityTerms, PRICE_RANGE, defaults.sensitivityPriceSteps),
-    [scenario.annualRatePct, scenario.downPaymentPct, scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct, scenario.maxFinancingPct, scenario.ufValueCLP] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
   const targetPropertyUF = useMemo(
     () => scenario.targetPropertyAmount != null
       ? toUF(scenario.targetPropertyAmount, scenario.targetPropertyUnit, scenario.ufValueCLP)
@@ -152,26 +171,59 @@ export function App() {
     [scenario.targetPropertyAmount, scenario.targetPropertyUnit, scenario.ufValueCLP]
   );
 
-  const rateData = useMemo(
-    () => generateRateSensitivity(scenario, defaults.sensitivityRateOffsets, targetPropertyUF),
-    [scenario.annualRatePct, scenario.termYears, scenario.downPaymentPct, scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct, scenario.ufValueCLP, targetPropertyUF] // eslint-disable-line react-hooks/exhaustive-deps
+  // ── Income mode: "push a little" sensitivity ──────────────────────────────
+  const incomeModeDeps = [
+    scenario.annualRatePct, scenario.termYears, scenario.downPaymentPct,
+    scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct,
+    scenario.maxFinancingPct, scenario.ufValueCLP,
+    scenario.netMonthlyIncomeAmount, scenario.netMonthlyIncomeUnit,
+    scenario.savingsAmount, scenario.savingsUnit,
+  ] as const; // eslint-disable-line react-hooks/exhaustive-deps
+
+  const termMaxData = useMemo(
+    () => scenario.mode === "income"
+      ? generateTermMaxProperty(scenario, defaults.sensitivityTerms)
+      : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scenario.mode, ...incomeModeDeps]
   );
 
-  const heatmapData = useMemo(() => {
-    const prices = Array.from({ length: 20 }, (_, i) => 500 + i * 475);
-    return generateHeatmapData(scenario, prices, [10, 15, 20, 25, 30]);
-  }, [scenario.annualRatePct, scenario.termYears, scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct, scenario.ufValueCLP]); // eslint-disable-line react-hooks/exhaustive-deps
+  const rateMaxData = useMemo(
+    () => scenario.mode === "income"
+      ? generateRateMaxProperty(scenario, defaults.sensitivityRateOffsets)
+      : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scenario.mode, ...incomeModeDeps]
+  );
 
-  const tableRows = useMemo(() => {
-    const prices = Array.from({ length: 12 }, (_, i) => 1000 + i * 500);
-    return generateSensitivityTable(scenario, prices);
-  }, [scenario.annualRatePct, scenario.termYears, scenario.downPaymentPct, scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct, scenario.maxFinancingPct, scenario.ufValueCLP, scenario.netMonthlyIncomeAmount, scenario.netMonthlyIncomeUnit]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ── Target property mode ──────────────────────────────────────────────────
+  const rateData = useMemo(
+    () => scenario.mode === "target_property"
+      ? generateRateSensitivity(scenario, FINE_RATE_OFFSETS, targetPropertyUF)
+      : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scenario.mode, scenario.annualRatePct, scenario.termYears, scenario.downPaymentPct,
+     scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct, scenario.ufValueCLP, targetPropertyUF]
+  );
 
   const pieRateData = useMemo(() => {
     if (scenario.mode !== "target_property") return [];
     const rates = defaults.sensitivityRateOffsets.map((o) => Math.max(0.1, scenario.annualRatePct + o));
     return generatePieRateSensitivity(scenario, targetPropertyUF, [10, 15, 20, 25, 30], rates);
-  }, [scenario.mode, scenario.annualRatePct, scenario.termYears, scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct, scenario.maxFinancingPct, scenario.ufValueCLP, scenario.netMonthlyIncomeAmount, scenario.netMonthlyIncomeUnit, targetPropertyUF]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario.mode, scenario.annualRatePct, scenario.termYears, scenario.monthlyInsuranceUF,
+      scenario.maxDividendIncomeRatioPct, scenario.maxFinancingPct, scenario.ufValueCLP,
+      scenario.netMonthlyIncomeAmount, scenario.netMonthlyIncomeUnit, targetPropertyUF]);
+
+  // ── Shared scenario table ─────────────────────────────────────────────────
+  const tableRows = useMemo(() => {
+    const prices = Array.from({ length: 12 }, (_, i) => 1000 + i * 500);
+    return generateSensitivityTable(scenario, prices);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario.annualRatePct, scenario.termYears, scenario.downPaymentPct,
+      scenario.monthlyInsuranceUF, scenario.maxDividendIncomeRatioPct,
+      scenario.maxFinancingPct, scenario.ufValueCLP,
+      scenario.netMonthlyIncomeAmount, scenario.netMonthlyIncomeUnit]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -210,22 +262,23 @@ export function App() {
       </div>
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
-            <ResultCards output={output} input={scenario} status={status} />
-            <ErrorBoundary>
-              <SensitivityPanel
-                key={scenario.mode}
-                affordabilityData={affordabilityData}
-                termData={termData}
-                rateData={rateData}
-                heatmapData={heatmapData}
-                pieRateData={pieRateData}
-                tableRows={tableRows}
-                input={scenario}
-                highlightPropertyUF={output.realisticMaxPropertyUF ?? output.propertyPriceUF}
-              />
-            </ErrorBoundary>
-            <GlossarySection />
-            <DisclaimerSection />
+        <ResultCards output={output} input={scenario} status={status} />
+        <ErrorBoundary>
+          <SensitivityPanel
+            key={scenario.mode}
+            termMaxData={termMaxData}
+            rateMaxData={rateMaxData}
+            maxPropertyByIncomeUF={output.maxPropertyByIncomeUF}
+            rateData={rateData}
+            pieRateData={pieRateData}
+            targetPropertyUF={targetPropertyUF}
+            tableRows={tableRows}
+            input={scenario}
+            highlightPropertyUF={output.realisticMaxPropertyUF ?? output.propertyPriceUF}
+          />
+        </ErrorBoundary>
+        <GlossarySection />
+        <DisclaimerSection />
       </main>
     </div>
   );

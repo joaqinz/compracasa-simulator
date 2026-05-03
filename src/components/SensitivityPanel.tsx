@@ -1,65 +1,51 @@
 import { lazy, Suspense, useState } from "react";
 import type { ScenarioInput, SensitivityRow } from "@/types/finance";
-import type {
-  AffordabilityPoint,
-  TermPoint,
-  RatePoint,
-  HeatmapData,
-  PieRatePoint,
-} from "@/lib/sensitivity";
+import type { RatePoint, PieRatePoint, TermMaxPoint, RateMaxPoint } from "@/lib/sensitivity";
+import { toUF } from "@/lib/money";
 import { ScenarioTable } from "./ScenarioTable";
-import { PieRateSensitivityTable } from "./PieRateSensitivityTable";
+import { PieDownPaymentPanel } from "./PieDownPaymentPanel";
+import { RateComparisonPanel } from "./RateComparisonPanel";
+import { TermComparisonPanel } from "./TermComparisonPanel";
+import { SavingsSensitivityPanel } from "./SavingsSensitivityPanel";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 
 type Props = {
-  affordabilityData: AffordabilityPoint[];
-  termData: TermPoint[];
+  // income mode
+  termMaxData: TermMaxPoint[];
+  rateMaxData: RateMaxPoint[];
+  maxPropertyByIncomeUF?: number;
+  // target_property mode
   rateData: RatePoint[];
-  heatmapData: HeatmapData;
   pieRateData: PieRatePoint[];
+  targetPropertyUF?: number;
+  // shared
   tableRows: SensitivityRow[];
   input: ScenarioInput;
   highlightPropertyUF?: number;
 };
 
-const incomeTabs = ["Ingreso vs Precio", "Plazo", "Sensibilidad Tasa", "Mapa de calor"];
-const targetTabs = ["Pie vs Tasa", "Sensibilidad Tasa"];
-const AffordabilityChart = lazy(() =>
-  import("./charts/AffordabilityChart").then((m) => ({ default: m.AffordabilityChart }))
-);
-const TermChart = lazy(() =>
-  import("./charts/TermChart").then((m) => ({ default: m.TermChart }))
-);
-const RateSensitivityChart = lazy(() =>
-  import("./charts/RateSensitivityChart").then((m) => ({ default: m.RateSensitivityChart }))
-);
-const HeatmapChart = lazy(() =>
-  import("./charts/HeatmapChart").then((m) => ({ default: m.HeatmapChart }))
-);
+const incomeTabs = ["Por plazo", "Ahorros y Pie", "Por tasa"];
+const targetTabs = ["Por pie", "Por tasa"];
 
-function ChartUnavailable({ activeTab }: { activeTab: number }) {
-  return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-      Los graficos estan temporalmente deshabilitados mientras estabilizamos la integracion de Plotly.
-      {activeTab === 0 && <div className="mt-2">Usa la tabla de escenarios de abajo para revisar los valores calculados.</div>}
-    </div>
-  );
-}
+const RateMaxPropertyChart = lazy(() =>
+  import("./charts/RateMaxPropertyChart").then((m) => ({ default: m.RateMaxPropertyChart }))
+);
 
 function ChartLoading() {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-      Cargando grafico de prueba...
+      Cargando…
     </div>
   );
 }
 
 export function SensitivityPanel({
-  affordabilityData,
-  termData,
+  termMaxData,
+  rateMaxData,
+  maxPropertyByIncomeUF,
   rateData,
-  heatmapData,
   pieRateData,
+  targetPropertyUF,
   tableRows,
   input,
   highlightPropertyUF,
@@ -69,49 +55,69 @@ export function SensitivityPanel({
   const isTargetMode = input.mode === "target_property";
   const tabs = isTargetMode ? targetTabs : incomeTabs;
 
-  const userIncomeCLP =
+  const currentSavingsUF =
+    input.savingsAmount != null
+      ? toUF(input.savingsAmount, input.savingsUnit, input.ufValueCLP)
+      : 0;
+
+  const userIncomeUF =
     input.netMonthlyIncomeAmount != null
-      ? input.netMonthlyIncomeUnit === "CLP"
-        ? input.netMonthlyIncomeAmount
-        : input.netMonthlyIncomeAmount * input.ufValueCLP
+      ? toUF(input.netMonthlyIncomeAmount, input.netMonthlyIncomeUnit, input.ufValueCLP)
       : undefined;
 
-  function renderActiveChart() {
+  const userSavingsUF = currentSavingsUF > 0 ? currentSavingsUF : undefined;
+
+  function renderContent() {
     if (isTargetMode) {
       if (activeTab === 0) {
         return (
-          <PieRateSensitivityTable
+          <PieDownPaymentPanel
             data={pieRateData}
+            currentRate={input.annualRatePct}
+            currentPiePct={input.downPaymentPct}
+            targetPropertyUF={targetPropertyUF ?? 0}
+            maxFinancingPct={input.maxFinancingPct}
             ufValueCLP={input.ufValueCLP}
-            hasIncome={input.netMonthlyIncomeAmount != null}
+            userIncomeUF={userIncomeUF}
           />
         );
       }
-      // activeTab === 1 → rate sensitivity for the fixed target price
-      return rateData.length > 0
-        ? <RateSensitivityChart data={rateData} currentRate={input.annualRatePct} />
-        : <ChartUnavailable activeTab={activeTab} />;
+      return (
+        <RateComparisonPanel
+          data={rateData}
+          currentRate={input.annualRatePct}
+          ufValueCLP={input.ufValueCLP}
+          userIncomeUF={userIncomeUF}
+        />
+      );
     }
 
-    // income mode tabs
+    // income mode
     if (activeTab === 0) {
-      return <AffordabilityChart data={affordabilityData} input={input} />;
+      return (
+        <TermComparisonPanel
+          data={termMaxData}
+          currentTerm={input.termYears}
+          ufValueCLP={input.ufValueCLP}
+        />
+      );
     }
     if (activeTab === 1) {
-      return termData.length > 0 ? <TermChart data={termData} /> : <ChartUnavailable activeTab={activeTab} />;
+      return (
+        <SavingsSensitivityPanel
+          currentSavingsUF={currentSavingsUF}
+          ufValueCLP={input.ufValueCLP}
+          maxFinancingPct={input.maxFinancingPct}
+          maxPropertyByIncomeUF={maxPropertyByIncomeUF}
+        />
+      );
     }
-    if (activeTab === 2) {
-      return rateData.length > 0
-        ? <RateSensitivityChart data={rateData} currentRate={input.annualRatePct} />
-        : <ChartUnavailable activeTab={activeTab} />;
-    }
-    if (activeTab === 3) {
-      return heatmapData.x.length > 0
-        ? <HeatmapChart data={heatmapData} userIncomeCLP={userIncomeCLP} />
-        : <ChartUnavailable activeTab={activeTab} />;
-    }
-
-    return <ChartUnavailable activeTab={activeTab} />;
+    // activeTab === 2
+    return (
+      <Suspense fallback={<ChartLoading />}>
+        <RateMaxPropertyChart data={rateMaxData} currentRate={input.annualRatePct} />
+      </Suspense>
+    );
   }
 
   return (
@@ -122,7 +128,7 @@ export function SensitivityPanel({
             <button
               key={t}
               type="button"
-              onClick={() => setActiveTab(Math.min(i, tabs.length - 1))}
+              onClick={() => setActiveTab(i)}
               className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-colors ${
                 activeTab === i
                   ? "border-b-2 border-blue-500 text-blue-600 bg-white"
@@ -136,21 +142,17 @@ export function SensitivityPanel({
 
         <div className="p-4">
           <ErrorBoundary
-            key={`chart-${activeTab}`}
+            key={`tab-${activeTab}-${isTargetMode}`}
             fallback={(error) => (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                El grafico de esta pestaña fallo al cargar. El resto del simulador sigue disponible.
+                Este panel falló al cargar. El resto del simulador sigue disponible.
                 {error?.message && (
-                  <div className="mt-2 font-mono text-xs text-amber-900 break-words">
-                    {error.message}
-                  </div>
+                  <div className="mt-2 font-mono text-xs text-amber-900 break-words">{error.message}</div>
                 )}
               </div>
             )}
           >
-            <Suspense fallback={<ChartLoading />}>
-              {renderActiveChart()}
-            </Suspense>
+            {renderContent()}
           </ErrorBoundary>
         </div>
       </div>
@@ -169,6 +171,8 @@ export function SensitivityPanel({
               rows={tableRows}
               ufValueCLP={input.ufValueCLP}
               highlightPropertyUF={highlightPropertyUF}
+              userIncomeUF={userIncomeUF}
+              userSavingsUF={userSavingsUF}
             />
           </div>
         )}

@@ -1,4 +1,4 @@
-import type { ScenarioInput, SensitivityRow } from "@/types/finance";
+import type { ScenarioInput, SensitivityRow, BindingConstraint } from "@/types/finance";
 import { runScenario } from "./affordability";
 import {
   calculateMonthlyPaymentUF,
@@ -8,7 +8,7 @@ import {
   calculateLoanAmountUF,
 } from "./mortgage";
 
-function linspace(min: number, max: number, steps: number): number[] {
+export function linspace(min: number, max: number, steps: number): number[] {
   const result: number[] = [];
   for (let i = 0; i < steps; i++) {
     result.push(min + (max - min) * (i / (steps - 1)));
@@ -184,6 +184,71 @@ export function generatePieRateSensitivity(
     }
   }
   return results;
+}
+
+// ── Income-mode "push a little" generators ────────────────────────────────
+
+export type TermMaxPoint = {
+  termYears: number;
+  maxPropertyUF: number;
+  bindingConstraint: BindingConstraint;
+};
+
+export function generateTermMaxProperty(
+  baseInput: ScenarioInput,
+  terms: number[]
+): TermMaxPoint[] {
+  return terms.map((term) => {
+    const out = runScenario({ ...baseInput, mode: "income", termYears: term });
+    return {
+      termYears: term,
+      maxPropertyUF: out.realisticMaxPropertyUF ?? 0,
+      bindingConstraint: out.bindingConstraint,
+    };
+  });
+}
+
+export type SavingsPoint = {
+  savingsUF: number;
+  savingsCLP: number;
+  maxPropertyUF: number;
+  bindingConstraint: BindingConstraint;
+};
+
+export function generateSavingsSensitivity(
+  baseInput: ScenarioInput,
+  savingsStepsUF: number[]
+): SavingsPoint[] {
+  return savingsStepsUF.map((savUF) => {
+    const out = runScenario({ ...baseInput, mode: "income", savingsAmount: savUF, savingsUnit: "UF" });
+    return {
+      savingsUF: savUF,
+      savingsCLP: savUF * baseInput.ufValueCLP,
+      maxPropertyUF: out.realisticMaxPropertyUF ?? 0,
+      bindingConstraint: out.bindingConstraint,
+    };
+  });
+}
+
+export type RateMaxPoint = {
+  annualRatePct: number;
+  maxPropertyUF: number;
+  bindingConstraint: BindingConstraint;
+};
+
+export function generateRateMaxProperty(
+  baseInput: ScenarioInput,
+  rateOffsets: number[]
+): RateMaxPoint[] {
+  return rateOffsets.map((offset) => {
+    const rate = Math.max(0.1, baseInput.annualRatePct + offset);
+    const out = runScenario({ ...baseInput, mode: "income", annualRatePct: rate });
+    return {
+      annualRatePct: rate,
+      maxPropertyUF: out.realisticMaxPropertyUF ?? 0,
+      bindingConstraint: out.bindingConstraint,
+    };
+  });
 }
 
 export function generateSensitivityTable(
