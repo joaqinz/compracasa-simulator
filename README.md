@@ -1,73 +1,203 @@
-# React + TypeScript + Vite
+# CompraCasa Simulator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interactive mortgage affordability simulator for Chile, built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+The app helps a user estimate:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- how much property they can realistically afford
+- whether a target property is feasible
+- how dividend, income requirements, and financing change with rate, term, and down payment assumptions
+- how different bank presets compare using CMF-based reference data
 
-## React Compiler
+It is designed to be published as a public static webpage and works well as a personal portfolio project hosted from GitHub and deployed to Netlify.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- Chile-focused mortgage simulation using `UF` and `CLP`
+- Two main modes:
+  - affordability from income and savings
+  - feasibility for a target property
+- Live UF lookup with graceful fallbacks
+- Bank preset selector backed by CMF simulator data
+- Sensitivity analysis for:
+  - property price
+  - down payment
+  - mortgage term
+  - interest rate
+- Charts and scenario tables for quick comparisons
+- Shareable scenarios through URL parameters
+- Static frontend deployment with no required backend for v1
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- `React 19`
+- `TypeScript`
+- `Vite`
+- `Tailwind CSS`
+- `Plotly`
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Project Structure
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+src/
+  components/        UI and charts
+  data/              default assumptions, glossary, bank presets
+  lib/               mortgage math, UF service, formatting, URL state
+  types/             shared TypeScript types
+scripts/
+  update-cmf-rates.mjs
+public/
+  _redirects         SPA routing for Netlify
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## How the App Works
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The simulator combines:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- user inputs such as income, savings, price target, rate, term, and down payment
+- mortgage calculation utilities in `src/lib/`
+- a UF value fetched at runtime
+- bank preset data stored in `src/data/bankPresets.json`
+
+The frontend is fully static. At runtime, it fetches UF data in the browser and computes all results client-side.
+
+## Data Sources
+
+### UF value
+
+The app tries these sources in order:
+
+1. `mindicador.cl`
+2. `SII` via a CORS proxy fallback
+3. a fallback UF value stored in `src/data/defaultAssumptions.json`
+
+This makes the app easy to deploy, but it also means runtime UF reliability depends partly on third-party services. For a more production-grade version, move UF fetching into a small serverless function.
+
+### Bank presets
+
+Bank presets are stored locally in `src/data/bankPresets.json` and are intended to be refreshed from the CMF mortgage simulator with:
+
+```bash
+npm run update:cmf-rates
 ```
+
+That script updates the preset dataset used by the app. Keeping the presets local avoids CORS and scraping problems in the public browser session.
+
+## Local Development
+
+### Requirements
+
+- `Node.js` 20+ recommended
+- `npm`
+
+### Install
+
+```bash
+npm install
+```
+
+### Start the dev server
+
+```bash
+npm run dev
+```
+
+Or on this Windows setup:
+
+```powershell
+.\start.ps1
+```
+
+### Build for production
+
+```bash
+npm run build
+```
+
+The production-ready static site is generated in `dist/`.
+
+### Preview the production build
+
+```bash
+npm run preview
+```
+
+## Deployment
+
+This project is a good fit for static hosting.
+
+### Recommended services
+
+- `GitHub` for source control and public project hosting
+- `Netlify` for deployment
+- optional custom domain if you want a cleaner public URL
+
+### Why Netlify
+
+The repo already includes `public/_redirects` for single-page app routing:
+
+```text
+/* /index.html 200
+```
+
+That makes Netlify a smooth default choice for this project.
+
+### Netlify configuration
+
+- Build command: `npm run build`
+- Publish directory: `dist`
+
+### Typical publish flow
+
+1. Create a GitHub repository
+2. Push this project to GitHub
+3. Create a Netlify site from that GitHub repo
+4. Set the build command to `npm run build`
+5. Set the publish directory to `dist`
+6. Deploy
+
+After that, every push to your main branch can trigger a new deployment automatically.
+
+## Suggested Personal Project Setup
+
+If your main goal is to make this public and keep it in your GitHub portfolio, the simplest setup is:
+
+- GitHub repository for the code
+- Netlify for hosting
+- README with screenshots and deployment link
+- optional custom domain later
+
+That is enough for a solid public version without adding unnecessary infrastructure.
+
+## Production Notes
+
+This app is already deployable as a static site, but there are two important caveats:
+
+1. UF fetching currently happens in the browser, so it depends on external public services.
+2. Bank presets are only as current as the latest `update:cmf-rates` run.
+
+For a stronger production version, consider:
+
+- a serverless endpoint for UF data
+- a scheduled job to refresh CMF-based bank presets
+- analytics and error tracking such as Google Analytics or Sentry
+
+## Available Scripts
+
+- `npm run dev`: start local Vite development server
+- `npm run build`: type-check and create a production build
+- `npm run preview`: preview the production build locally
+- `npm run lint`: run ESLint
+- `npm run update:cmf-rates`: refresh bank preset data from the CMF simulator flow
+
+## Future Improvements
+
+- add automated tests for core mortgage calculations
+- add CI checks for linting and builds
+- move UF lookup to a serverless backend
+- automate bank preset refreshes on a schedule
+- improve README with screenshots once the public deployment is live
+
+## License
+
+No license has been added yet. If you want this to be clearly open-source, add a license file such as `MIT`.
