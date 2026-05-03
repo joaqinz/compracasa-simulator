@@ -1,0 +1,18 @@
+{
+  "termYears": 25,
+  "downPaymentPct": 20,
+  "annualRatePct": 4.85,
+  "caePct": 5.42,
+  "monthlyInsuranceUF": 1.2,
+  "maxDividendIncomeRatioPct": 25,
+  "maxFinancingPct": 80,
+  "displayUnit": "BOTH",
+  "ufFallbackCLP": 40160.14,
+  "ufFallbackDate": "2026-05-03",
+  "sensitivityPriceRangeMinUF": 500,
+  "sensitivityPriceRangeMaxUF": 10000,
+  "sensitivityPriceSteps": 40,
+  "sensitivityDownPaymentPcts": [10, 20, 30],
+  "sensitivityTerms": [15, 20, 25, 30],
+  "sensitivityRateOffsets": [-1.0, -0.5, 0, 0.5, 1.0]
+}
