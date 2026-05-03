@@ -55,13 +55,18 @@ export type BankPreset = {
   bankId: string;
   bankName: string;
   productName: string;
-  baseAnnualRatePct: number;
-  caePct: number;
-  monthlyInsuranceUF: number;
   maxFinancingPct: number;
   maxDividendIncomeRatioPct: number;
   availableTermsYears: number[];
   source: string;
+  termPresets: BankTermPreset[];
+};
+
+export type BankTermPreset = {
+  termYears: number;
+  annualRatePct: number;
+  caePct: number;
+  monthlyInsuranceUF: number;
   sourceUrl: string;
   lastUpdated: string;
   notes?: string;

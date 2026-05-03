@@ -2,6 +2,7 @@ import type { ScenarioInput, MoneyUnit } from "@/types/finance";
 import { MoneyInput } from "./ui/MoneyInput";
 import { BankSelector } from "./BankSelector";
 
+const TERM_OPTIONS = [15, 20, 25, 30];
 
 type Props = {
   scenario: ScenarioInput;
@@ -62,7 +63,7 @@ export function InputPanel({ scenario, onChange }: Props) {
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-slate-700">Plazo del crédito</label>
             <div className="grid grid-cols-2 gap-2">
-              {[15, 20, 25, 30].map((t) => (
+              {TERM_OPTIONS.map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -84,6 +85,7 @@ export function InputPanel({ scenario, onChange }: Props) {
         {/* Col 3: bank selector */}
         <BankSelector
           selectedBankId={scenario.selectedBankId}
+          termYears={scenario.termYears}
           annualRatePct={scenario.annualRatePct}
           caePct={scenario.caePct}
           monthlyInsuranceUF={scenario.monthlyInsuranceUF}

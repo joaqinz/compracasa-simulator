@@ -12,11 +12,14 @@ import {
 import { getUFValue } from "@/lib/ufService";
 import { encodeScenarioToURL, decodeScenarioFromURL } from "@/lib/urlParams";
 import { toUF } from "@/lib/money";
-import { firstBankPreset } from "@/lib/bankPresets";
+import { findLowestRatePresetForTerm, firstBankPreset, resolveBankTermPreset } from "@/lib/bankPresets";
 
 const FINE_RATE_OFFSETS = Array.from({ length: 41 }, (_, i) =>
   parseFloat((-1.0 + i * 0.05).toFixed(2))
 );
+const defaultResolvedPreset =
+  findLowestRatePresetForTerm(defaults.termYears) ??
+  resolveBankTermPreset(firstBankPreset.bankId, defaults.termYears);
 
 import { UFStatusBar } from "@/components/UFStatusBar";
 import { ModeSelector } from "@/components/ModeSelector";
@@ -38,13 +41,14 @@ const defaultScenario: ScenarioInput = {
   targetPropertyUnit: "UF",
   termYears: defaults.termYears,
   downPaymentPct: defaults.downPaymentPct,
-  annualRatePct: defaults.annualRatePct,
-  caePct: defaults.caePct,
-  monthlyInsuranceUF: defaults.monthlyInsuranceUF,
-  maxDividendIncomeRatioPct: defaults.maxDividendIncomeRatioPct,
-  maxFinancingPct: defaults.maxFinancingPct,
+  annualRatePct: defaultResolvedPreset?.term.annualRatePct ?? defaults.annualRatePct,
+  caePct: defaultResolvedPreset?.term.caePct ?? defaults.caePct,
+  monthlyInsuranceUF: defaultResolvedPreset?.term.monthlyInsuranceUF ?? defaults.monthlyInsuranceUF,
+  maxDividendIncomeRatioPct:
+    defaultResolvedPreset?.bank.maxDividendIncomeRatioPct ?? defaults.maxDividendIncomeRatioPct,
+  maxFinancingPct: defaultResolvedPreset?.bank.maxFinancingPct ?? defaults.maxFinancingPct,
   displayUnit: defaults.displayUnit as "BOTH",
-  selectedBankId: firstBankPreset.bankId,
+  selectedBankId: defaultResolvedPreset?.bank.bankId ?? firstBankPreset.bankId,
 };
 
 type AppState = {
@@ -92,9 +96,38 @@ export function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { scenario, ufMetadata, ufLoading, ufError } = state;
 
+  function applyPresetForSelectedBank(base: ScenarioInput, patch: Partial<ScenarioInput>): Partial<ScenarioInput> {
+    const nextScenario = { ...base, ...patch };
+
+    if (nextScenario.selectedBankId === "manual") {
+      return patch;
+    }
+
+    const shouldPickLowestForTerm =
+      "termYears" in patch && patch.termYears != null && !("selectedBankId" in patch);
+
+    const resolvedPreset = shouldPickLowestForTerm
+      ? findLowestRatePresetForTerm(nextScenario.termYears)
+      : resolveBankTermPreset(nextScenario.selectedBankId, nextScenario.termYears);
+
+    if (!resolvedPreset) {
+      return patch;
+    }
+
+    return {
+      ...patch,
+      selectedBankId: resolvedPreset.bank.bankId,
+      annualRatePct: resolvedPreset.term.annualRatePct,
+      caePct: resolvedPreset.term.caePct,
+      monthlyInsuranceUF: resolvedPreset.term.monthlyInsuranceUF,
+      maxFinancingPct: resolvedPreset.bank.maxFinancingPct,
+      maxDividendIncomeRatioPct: resolvedPreset.bank.maxDividendIncomeRatioPct,
+    };
+  }
+
   useEffect(() => {
     if (window.location.search) {
-      const patch = decodeScenarioFromURL(window.location.search);
+      const patch = applyPresetForSelectedBank(defaultScenario, decodeScenarioFromURL(window.location.search));
       dispatch({ type: "LOAD_FROM_URL", patch });
     }
   }, []);
@@ -109,7 +142,8 @@ export function App() {
   }, []);
 
   function handleChange(patch: Partial<ScenarioInput>) {
-    dispatch({ type: "UPDATE_SCENARIO", patch: syncSavingsPie(patch, scenario, output) });
+    const presetAwarePatch = applyPresetForSelectedBank(scenario, patch);
+    dispatch({ type: "UPDATE_SCENARIO", patch: syncSavingsPie(presetAwarePatch, scenario, output) });
   }
 
   function syncSavingsPie(

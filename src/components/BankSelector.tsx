@@ -1,8 +1,9 @@
-import { bankPresets } from "@/lib/bankPresets";
+import { bankPresets, resolveBankTermPreset } from "@/lib/bankPresets";
 import { Tooltip } from "./ui/Tooltip";
 
 type Props = {
   selectedBankId: string;
+  termYears: number;
   annualRatePct: number;
   caePct: number;
   monthlyInsuranceUF: number;
@@ -10,6 +11,7 @@ type Props = {
   maxDividendIncomeRatioPct: number;
   onChange: (patch: Partial<{
     selectedBankId: string;
+    termYears: number;
     annualRatePct: number;
     caePct: number;
     monthlyInsuranceUF: number;
@@ -20,6 +22,7 @@ type Props = {
 
 export function BankSelector({
   selectedBankId,
+  termYears,
   annualRatePct,
   caePct,
   monthlyInsuranceUF,
@@ -28,7 +31,9 @@ export function BankSelector({
   onChange,
 }: Props) {
   const isManual = selectedBankId === "manual";
-  const selectedBank = bankPresets.find((b) => b.bankId === selectedBankId);
+  const selectedPreset = resolveBankTermPreset(selectedBankId, termYears);
+  const selectedBank = selectedPreset?.bank;
+  const selectedTermPreset = selectedPreset?.term;
   const nonManualPresets = bankPresets.filter((b) => b.bankId !== "manual");
 
   function handleBankChange(bankId: string) {
@@ -36,15 +41,16 @@ export function BankSelector({
       onChange({ selectedBankId: "manual" });
       return;
     }
-    const preset = bankPresets.find((b) => b.bankId === bankId);
+
+    const preset = resolveBankTermPreset(bankId, termYears);
     if (preset) {
       onChange({
-        selectedBankId: preset.bankId,
-        annualRatePct: preset.baseAnnualRatePct,
-        caePct: preset.caePct,
-        monthlyInsuranceUF: preset.monthlyInsuranceUF,
-        maxFinancingPct: preset.maxFinancingPct,
-        maxDividendIncomeRatioPct: preset.maxDividendIncomeRatioPct,
+        selectedBankId: preset.bank.bankId,
+        annualRatePct: preset.term.annualRatePct,
+        caePct: preset.term.caePct,
+        monthlyInsuranceUF: preset.term.monthlyInsuranceUF,
+        maxFinancingPct: preset.bank.maxFinancingPct,
+        maxDividendIncomeRatioPct: preset.bank.maxDividendIncomeRatioPct,
       });
     }
   }
@@ -124,7 +130,7 @@ export function BankSelector({
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-slate-600 flex items-center">
-            Financiamiento máx. <Tooltip termId="financiamiento-maximo" />
+            Financiamiento max. <Tooltip termId="financiamiento-maximo" />
           </label>
           {isManual ? (
             <input
@@ -142,24 +148,34 @@ export function BankSelector({
         </div>
       </div>
 
-      {!isManual && selectedBank && (
-        <p className="text-[10px] text-slate-400">
-          Tasas actualizadas: {selectedBank.lastUpdated} · Fuente:{" "}
-          <a
-            href={selectedBank.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-slate-600"
-          >
-            CMF Simulador Hipotecario
-          </a>
-          . Valores referenciales.
-        </p>
+      {!isManual && selectedBank && selectedTermPreset && (
+        <div className="text-[10px] text-slate-400 flex flex-col gap-1">
+          {selectedTermPreset.termYears === termYears ? (
+            <p>
+              Tasas CMF para {selectedTermPreset.termYears} anos: {selectedTermPreset.lastUpdated} - Fuente:{" "}
+              <a
+                href={selectedTermPreset.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-slate-600"
+              >
+                CMF Simulador Hipotecario
+              </a>
+              . Valores referenciales.
+            </p>
+          ) : (
+            <p>
+              No hay escenario CMF para {termYears} anos en este banco. Mostrando como referencia el disponible mas
+              cercano: {selectedTermPreset.termYears} anos.
+            </p>
+          )}
+          <p>Escenarios disponibles para este banco: {selectedBank.availableTermsYears.join(", ")} anos.</p>
+        </div>
       )}
 
       <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-slate-600 flex items-center">
-          Carga financiera máxima <Tooltip termId="carga-financiera" />
+          Carga financiera maxima <Tooltip termId="carga-financiera" />
         </label>
         <div className="flex items-center gap-2">
           <input

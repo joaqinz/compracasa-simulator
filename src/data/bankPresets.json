@@ -3,174 +3,322 @@
     "bankId": "manual",
     "bankName": "Ingreso manual",
     "productName": "Parámetros personalizados",
-    "baseAnnualRatePct": 4.85,
-    "caePct": 5.42,
-    "monthlyInsuranceUF": 1.2,
     "maxFinancingPct": 80,
     "maxDividendIncomeRatioPct": 25,
     "availableTermsYears": [
-      15,
       20,
       25,
       30
     ],
     "source": "Manual",
-    "sourceUrl": "",
-    "lastUpdated": "2026-05-03"
-  },
-  {
-    "bankId": "santander",
-    "bankName": "Banco Santander-Chile",
-    "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 4.25,
-    "caePct": 4.89,
-    "monthlyInsuranceUF": 0.3197,
-    "maxFinancingPct": 80,
-    "maxDividendIncomeRatioPct": 25,
-    "availableTermsYears": [
-      15,
-      20,
-      25,
-      30
-    ],
-    "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2026-04-15",
-    "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
-  },
-  {
-    "bankId": "bancointernacional",
-    "bankName": "Banco Internacional",
-    "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 4.68,
-    "caePct": 5.03,
-    "monthlyInsuranceUF": 0.177,
-    "maxFinancingPct": 80,
-    "maxDividendIncomeRatioPct": 25,
-    "availableTermsYears": [
-      15,
-      20,
-      25,
-      30
-    ],
-    "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2026-03-09"
-  },
-  {
-    "bankId": "coopeuch",
-    "bankName": "Coopeuch",
-    "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 4.5,
-    "caePct": 5.12,
-    "monthlyInsuranceUF": 0.314,
-    "maxFinancingPct": 80,
-    "maxDividendIncomeRatioPct": 25,
-    "availableTermsYears": [
-      15,
-      20,
-      25,
-      30
-    ],
-    "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2025-08-21"
-  },
-  {
-    "bankId": "bancofalabella",
-    "bankName": "Banco Falabella",
-    "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 4.7,
-    "caePct": 5.2,
-    "monthlyInsuranceUF": 0.2557,
-    "maxFinancingPct": 80,
-    "maxDividendIncomeRatioPct": 25,
-    "availableTermsYears": [
-      15,
-      20,
-      25,
-      30
-    ],
-    "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2024-12-30"
-  },
-  {
-    "bankId": "itau",
-    "bankName": "Itaú Corpbanca",
-    "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 4.62,
-    "caePct": 5.21,
-    "monthlyInsuranceUF": 0.2975,
-    "maxFinancingPct": 80,
-    "maxDividendIncomeRatioPct": 25,
-    "availableTermsYears": [
-      15,
-      20,
-      25,
-      30
-    ],
-    "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2026-04-13",
-    "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.85,
+        "caePct": 5.42,
+        "monthlyInsuranceUF": 1.2,
+        "sourceUrl": "",
+        "lastUpdated": "2026-05-03"
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 4.85,
+        "caePct": 5.42,
+        "monthlyInsuranceUF": 1.2,
+        "sourceUrl": "",
+        "lastUpdated": "2026-05-03"
+      },
+      {
+        "termYears": 30,
+        "annualRatePct": 4.85,
+        "caePct": 5.42,
+        "monthlyInsuranceUF": 1.2,
+        "sourceUrl": "",
+        "lastUpdated": "2026-05-03"
+      }
+    ]
   },
   {
     "bankId": "bancochile",
     "bankName": "Banco de Chile",
     "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 4.86,
-    "caePct": 5.22,
-    "monthlyInsuranceUF": 0.183,
     "maxFinancingPct": 80,
     "maxDividendIncomeRatioPct": 25,
-    "availableTermsYears": [
-      15,
-      20,
-      25,
-      30
-    ],
     "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2026-04-30"
-  },
-  {
-    "bankId": "scotiabank",
-    "bankName": "Scotiabank Chile",
-    "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 4.7,
-    "caePct": 5.5,
-    "monthlyInsuranceUF": 0.4077,
-    "maxFinancingPct": 80,
-    "maxDividendIncomeRatioPct": 25,
-    "availableTermsYears": [
-      15,
-      20,
-      25,
-      30
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.79,
+        "caePct": 5.14,
+        "monthlyInsuranceUF": 0.5856,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-30"
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 4.78,
+        "caePct": 5.11,
+        "monthlyInsuranceUF": 0.5856,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=25&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-30"
+      }
     ],
-    "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2026-04-15",
-    "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+    "availableTermsYears": [
+      20,
+      25
+    ]
   },
   {
     "bankId": "bci",
     "bankName": "Banco de Crédito e Inversiones",
     "productName": "Mutuo no Endosable UF tasa fija",
-    "baseAnnualRatePct": 5.93,
-    "caePct": 6.24,
-    "monthlyInsuranceUF": 0.1637,
     "maxFinancingPct": 80,
     "maxDividendIncomeRatioPct": 25,
+    "source": "CMF Simulador Hipotecario",
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 5.53,
+        "caePct": 5.83,
+        "monthlyInsuranceUF": 0.5237,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2025-04-09"
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 5.36,
+        "caePct": 5.65,
+        "monthlyInsuranceUF": 0.5237,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=25&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2025-04-09"
+      },
+      {
+        "termYears": 30,
+        "annualRatePct": 5.43,
+        "caePct": 5.71,
+        "monthlyInsuranceUF": 0.5237,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=30&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2025-04-09"
+      }
+    ],
     "availableTermsYears": [
-      15,
       20,
       25,
       30
-    ],
+    ]
+  },
+  {
+    "bankId": "bancofalabella",
+    "bankName": "Banco Falabella",
+    "productName": "Mutuo no Endosable UF tasa fija",
+    "maxFinancingPct": 80,
+    "maxDividendIncomeRatioPct": 25,
     "source": "CMF Simulador Hipotecario",
-    "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=1000&tipocredito=3&tipotasa=1&plazo=17&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
-    "lastUpdated": "2025-04-09"
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.68,
+        "caePct": 5.17,
+        "monthlyInsuranceUF": 0.8181,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2024-12-30"
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 4.65,
+        "caePct": 5.11,
+        "monthlyInsuranceUF": 0.8181,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=25&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2024-12-30"
+      },
+      {
+        "termYears": 30,
+        "annualRatePct": 4.64,
+        "caePct": 5.08,
+        "monthlyInsuranceUF": 0.8181,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=30&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2024-12-30"
+      }
+    ],
+    "availableTermsYears": [
+      20,
+      25,
+      30
+    ]
+  },
+  {
+    "bankId": "bancointernacional",
+    "bankName": "Banco Internacional",
+    "productName": "Mutuo no Endosable UF tasa fija",
+    "maxFinancingPct": 80,
+    "maxDividendIncomeRatioPct": 25,
+    "source": "CMF Simulador Hipotecario",
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.68,
+        "caePct": 5.02,
+        "monthlyInsuranceUF": 0.5664,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-03-09"
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 4.79,
+        "caePct": 5.11,
+        "monthlyInsuranceUF": 0.5664,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=25&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-03-09"
+      }
+    ],
+    "availableTermsYears": [
+      20,
+      25
+    ]
+  },
+  {
+    "bankId": "santander",
+    "bankName": "Banco Santander-Chile",
+    "productName": "Mutuo no Endosable UF tasa fija",
+    "maxFinancingPct": 80,
+    "maxDividendIncomeRatioPct": 25,
+    "source": "CMF Simulador Hipotecario",
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.25,
+        "caePct": 4.87,
+        "monthlyInsuranceUF": 1.0229,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-15",
+        "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 4.12,
+        "caePct": 4.71,
+        "monthlyInsuranceUF": 1.0229,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=25&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-15",
+        "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+      },
+      {
+        "termYears": 30,
+        "annualRatePct": 4.1,
+        "caePct": 4.67,
+        "monthlyInsuranceUF": 1.0229,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=30&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-15",
+        "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+      }
+    ],
+    "availableTermsYears": [
+      20,
+      25,
+      30
+    ]
+  },
+  {
+    "bankId": "coopeuch",
+    "bankName": "Coopeuch",
+    "productName": "Mutuo no Endosable UF tasa fija",
+    "maxFinancingPct": 80,
+    "maxDividendIncomeRatioPct": 25,
+    "source": "CMF Simulador Hipotecario",
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.5,
+        "caePct": 5.1,
+        "monthlyInsuranceUF": 1.0048,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2025-08-21"
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 4.5,
+        "caePct": 5.07,
+        "monthlyInsuranceUF": 1.0048,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=25&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2025-08-21"
+      },
+      {
+        "termYears": 30,
+        "annualRatePct": 4.5,
+        "caePct": 5.05,
+        "monthlyInsuranceUF": 1.0048,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=30&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2025-08-21"
+      }
+    ],
+    "availableTermsYears": [
+      20,
+      25,
+      30
+    ]
+  },
+  {
+    "bankId": "itau",
+    "bankName": "Itaú Corpbanca",
+    "productName": "Mutuo no Endosable UF tasa fija",
+    "maxFinancingPct": 80,
+    "maxDividendIncomeRatioPct": 25,
+    "source": "CMF Simulador Hipotecario",
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.64,
+        "caePct": 5.21,
+        "monthlyInsuranceUF": 0.9522,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-13",
+        "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+      },
+      {
+        "termYears": 25,
+        "annualRatePct": 4.73,
+        "caePct": 5.27,
+        "monthlyInsuranceUF": 0.9522,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=25&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-13",
+        "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+      },
+      {
+        "termYears": 30,
+        "annualRatePct": 4.81,
+        "caePct": 5.32,
+        "monthlyInsuranceUF": 0.9522,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=30&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-13",
+        "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+      }
+    ],
+    "availableTermsYears": [
+      20,
+      25,
+      30
+    ]
+  },
+  {
+    "bankId": "scotiabank",
+    "bankName": "Scotiabank Chile",
+    "productName": "Mutuo no Endosable UF tasa fija",
+    "maxFinancingPct": 80,
+    "maxDividendIncomeRatioPct": 25,
+    "source": "CMF Simulador Hipotecario",
+    "termPresets": [
+      {
+        "termYears": 20,
+        "annualRatePct": 4.67,
+        "caePct": 5.44,
+        "monthlyInsuranceUF": 1.3045,
+        "sourceUrl": "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion?indice=101.2.3&maxuf=20000&minuf=100&maxpeso=803202800&minpeso=4016014&paso=2&template=entidades&tipomoneda=1&monto=3200&tipocredito=3&tipotasa=1&plazo=20&inst=OK&marcados=1&marcados=9&marcados=14&marcados=16&marcados=37&marcados=39&marcados=51&marcados=672",
+        "lastUpdated": "2026-04-15",
+        "notes": "Esta institucion solamente ofrece el seguro de incendio con adicional de sismo."
+      }
+    ],
+    "availableTermsYears": [
+      20
+    ]
   }
 ]

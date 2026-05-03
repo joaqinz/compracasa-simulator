@@ -81,7 +81,7 @@ Bank presets are stored locally in `src/data/bankPresets.json` and are intended 
 npm run update:cmf-rates
 ```
 
-That script updates the preset dataset used by the app. Keeping the presets local avoids CORS and scraping problems in the public browser session.
+That script updates the preset dataset used by the app using a CMF reference scenario based on a `4,000 UF` property, `80%` financing, and a fixed-rate loan. It refreshes term-specific bank presets for `20`, `25`, and `30` years so the app can react to the selected financing term. Keeping the presets local avoids CORS and scraping problems in the public browser session.
 
 ## Local Development
 

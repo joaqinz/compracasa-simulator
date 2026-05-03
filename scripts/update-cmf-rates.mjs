@@ -3,6 +3,12 @@ import path from "node:path";
 
 const CMF_SIMULATOR_URL = "https://servicios.cmfchile.cl/simuladorhipotecario/aplicacion";
 const OUTPUT_FILE = path.resolve("src/data/bankPresets.json");
+const DEFAULT_REFERENCE_PROPERTY_UF = 4000;
+const DEFAULT_REFERENCE_MAX_FINANCING_PCT = 80;
+const DEFAULT_REFERENCE_LOAN_UF = Math.round(
+  DEFAULT_REFERENCE_PROPERTY_UF * (DEFAULT_REFERENCE_MAX_FINANCING_PCT / 100)
+);
+const DEFAULT_PRESET_TERMS = [20, 25, 30];
 const DEFAULT_QUERY = {
   indice: "101.2.3",
   maxuf: "20000",
@@ -12,15 +18,13 @@ const DEFAULT_QUERY = {
   paso: "2",
   template: "entidades",
   tipomoneda: "1",
-  monto: "1000",
+  monto: String(DEFAULT_REFERENCE_LOAN_UF),
   tipocredito: "3",
   tipotasa: "1",
-  plazo: "17",
+  plazo: String(DEFAULT_PRESET_TERMS[1]),
   inst: "OK",
   marcados: ["1", "9", "14", "16", "37", "39", "51", "672"],
 };
-
-const DEFAULT_TERMS = [15, 20, 25, 30];
 const BANK_ID_ALIASES = {
   "Banco Santander-Chile": "santander",
   "Banco de Chile": "bancochile",
@@ -46,6 +50,13 @@ function buildCmfUrl(query = DEFAULT_QUERY) {
     url.searchParams.set(key, value);
   }
   return url.toString();
+}
+
+function buildCmfQuery(termYears) {
+  return {
+    ...DEFAULT_QUERY,
+    plazo: String(termYears),
+  };
 }
 
 function decodeHtmlEntities(text) {
@@ -213,7 +224,7 @@ function parseModalDetails(modalHtml, fallbackMonthlyDividendClp, ufValueClp) {
   };
 }
 
-function parseBankPresets(html, sourceUrl) {
+function parseBankTermPresets(html, sourceUrl, termYears) {
   const ufValueClp = parseUfValueFromHtml(html);
   const rows = extractRows(html);
   const modals = extractModals(html);
@@ -240,19 +251,55 @@ function parseBankPresets(html, sourceUrl) {
         bankId: slugifyBankId(normalizedBankName),
         bankName: normalizedBankName,
         productName: `${creditType} ${currency} tasa ${rateType.toLowerCase()}`,
-        baseAnnualRatePct: round(loanRatePct, 2),
-        caePct: round(caePct, 2),
-        monthlyInsuranceUF: modalDetails.monthlyInsuranceUf,
+        termPreset: {
+          termYears,
+          annualRatePct: round(loanRatePct, 2),
+          caePct: round(caePct, 2),
+          monthlyInsuranceUF: modalDetails.monthlyInsuranceUf,
+          sourceUrl,
+          lastUpdated: modalDetails.updatedAt,
+          ...(modalDetails.notes ? { notes: modalDetails.notes } : {}),
+        },
         maxFinancingPct: 80,
         maxDividendIncomeRatioPct: 25,
-        availableTermsYears: DEFAULT_TERMS,
         source: "CMF Simulador Hipotecario",
-        sourceUrl,
-        lastUpdated: modalDetails.updatedAt,
-        ...(modalDetails.notes ? { notes: modalDetails.notes } : {}),
       };
     })
     .filter(Boolean);
+}
+
+function mergeTermPresets(termResults) {
+  const merged = new Map();
+
+  for (const result of termResults.flat()) {
+    const existing = merged.get(result.bankId);
+
+    if (!existing) {
+      merged.set(result.bankId, {
+        bankId: result.bankId,
+        bankName: result.bankName,
+        productName: result.productName,
+        maxFinancingPct: result.maxFinancingPct,
+        maxDividendIncomeRatioPct: result.maxDividendIncomeRatioPct,
+        source: result.source,
+        termPresets: [result.termPreset],
+      });
+      continue;
+    }
+
+    existing.termPresets.push(result.termPreset);
+  }
+
+  return [...merged.values()]
+    .map((preset) => {
+      const termPresets = preset.termPresets.sort((a, b) => a.termYears - b.termYears);
+      return {
+        ...preset,
+        availableTermsYears: termPresets.map((termPreset) => termPreset.termYears),
+        termPresets,
+      };
+    })
+    .sort((a, b) => a.bankName.localeCompare(b.bankName));
 }
 
 async function loadExistingManualPreset() {
@@ -260,7 +307,28 @@ async function loadExistingManualPreset() {
     const existing = JSON.parse(await readFile(OUTPUT_FILE, "utf8"));
     const manualPreset = existing.find((preset) => preset.bankId === "manual");
     if (manualPreset) {
-      return manualPreset;
+      const normalizedTerms = manualPreset.termPresets?.length
+        ? manualPreset.termPresets
+        : DEFAULT_PRESET_TERMS.map((termYears) => ({
+            termYears,
+            annualRatePct: manualPreset.baseAnnualRatePct ?? 4.85,
+            caePct: manualPreset.caePct ?? 5.42,
+            monthlyInsuranceUF: manualPreset.monthlyInsuranceUF ?? 1.2,
+            sourceUrl: manualPreset.sourceUrl ?? "",
+            lastUpdated: manualPreset.lastUpdated ?? new Date().toISOString().slice(0, 10),
+            ...(manualPreset.notes ? { notes: manualPreset.notes } : {}),
+          }));
+
+      return {
+        bankId: manualPreset.bankId,
+        bankName: manualPreset.bankName,
+        productName: manualPreset.productName,
+        maxFinancingPct: manualPreset.maxFinancingPct ?? 80,
+        maxDividendIncomeRatioPct: manualPreset.maxDividendIncomeRatioPct ?? 25,
+        availableTermsYears: normalizedTerms.map((termPreset) => termPreset.termYears),
+        source: manualPreset.source ?? "Manual",
+        termPresets: normalizedTerms,
+      };
     }
   } catch {
     // Ignore read/parse errors and fall back to the default manual preset.
@@ -270,15 +338,18 @@ async function loadExistingManualPreset() {
     bankId: "manual",
     bankName: "Ingreso manual",
     productName: "Parametros personalizados",
-    baseAnnualRatePct: 4.85,
-    caePct: 5.42,
-    monthlyInsuranceUF: 1.2,
     maxFinancingPct: 80,
     maxDividendIncomeRatioPct: 25,
-    availableTermsYears: DEFAULT_TERMS,
     source: "Manual",
-    sourceUrl: "",
-    lastUpdated: new Date().toISOString().slice(0, 10),
+    availableTermsYears: DEFAULT_PRESET_TERMS,
+    termPresets: DEFAULT_PRESET_TERMS.map((termYears) => ({
+      termYears,
+      annualRatePct: 4.85,
+      caePct: 5.42,
+      monthlyInsuranceUF: 1.2,
+      sourceUrl: "",
+      lastUpdated: new Date().toISOString().slice(0, 10),
+    })),
   };
 }
 
@@ -298,10 +369,15 @@ async function fetchCmfHtml(url) {
 }
 
 async function updateBankPresets() {
-  const sourceUrl = buildCmfUrl();
-  const html = await fetchCmfHtml(sourceUrl);
   const manualPreset = await loadExistingManualPreset();
-  const presets = parseBankPresets(html, sourceUrl);
+  const termResults = await Promise.all(
+    DEFAULT_PRESET_TERMS.map(async (termYears) => {
+      const sourceUrl = buildCmfUrl(buildCmfQuery(termYears));
+      const html = await fetchCmfHtml(sourceUrl);
+      return parseBankTermPresets(html, sourceUrl, termYears);
+    })
+  );
+  const presets = mergeTermPresets(termResults);
   const payload = [manualPreset, ...presets];
 
   await writeFile(OUTPUT_FILE, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
