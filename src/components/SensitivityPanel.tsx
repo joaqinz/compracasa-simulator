@@ -1,46 +1,52 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import type { ScenarioInput, SensitivityRow } from "@/types/finance";
-import type { RatePoint, PieRatePoint, TermMaxPoint, RateMaxPoint } from "@/lib/sensitivity";
+import type {
+  RatePoint,
+  PieRatePoint,
+  TermMaxPoint,
+  RateMaxPoint,
+  TargetTermPoint,
+} from "@/lib/sensitivity";
 import { toUF } from "@/lib/money";
+import { getBankPreset } from "@/lib/bankPresets";
 import { ScenarioTable } from "./ScenarioTable";
 import { PieDownPaymentPanel } from "./PieDownPaymentPanel";
 import { RateComparisonPanel } from "./RateComparisonPanel";
 import { TermComparisonPanel } from "./TermComparisonPanel";
+import { TargetTermComparisonPanel } from "./TargetTermComparisonPanel";
 import { SavingsSensitivityPanel } from "./SavingsSensitivityPanel";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 
 type Props = {
-  // income mode
   termMaxData: TermMaxPoint[];
+  targetTermData: TargetTermPoint[];
   rateMaxData: RateMaxPoint[];
   maxPropertyByIncomeUF?: number;
-  // target_property mode
   rateData: RatePoint[];
   pieRateData: PieRatePoint[];
   targetPropertyUF?: number;
-  // shared
   tableRows: SensitivityRow[];
   input: ScenarioInput;
   highlightPropertyUF?: number;
 };
 
-const incomeTabs = ["Por plazo", "Ahorros y Pie", "Por tasa"];
-const targetTabs = ["Por pie", "Por tasa"];
+const tabs = ["Por plazo", "Por pie", "Por tasa"];
 
 const RateMaxPropertyChart = lazy(() =>
-  import("./charts/RateMaxPropertyChart").then((m) => ({ default: m.RateMaxPropertyChart }))
+  import("./charts/RateMaxPropertyChart").then((module) => ({ default: module.RateMaxPropertyChart }))
 );
 
 function ChartLoading() {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-      Cargando…
+      Cargando...
     </div>
   );
 }
 
 export function SensitivityPanel({
   termMaxData,
+  targetTermData,
   rateMaxData,
   maxPropertyByIncomeUF,
   rateData,
@@ -52,13 +58,12 @@ export function SensitivityPanel({
 }: Props) {
   const [activeTab, setActiveTab] = useState(0);
   const [showTable, setShowTable] = useState(true);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const isTargetMode = input.mode === "target_property";
-  const tabs = isTargetMode ? targetTabs : incomeTabs;
+  const selectedBankName = getBankPreset(input.selectedBankId)?.bankName ?? "Ingreso manual";
 
   const currentSavingsUF =
-    input.savingsAmount != null
-      ? toUF(input.savingsAmount, input.savingsUnit, input.ufValueCLP)
-      : 0;
+    input.savingsAmount != null ? toUF(input.savingsAmount, input.savingsUnit, input.ufValueCLP) : 0;
 
   const userIncomeUF =
     input.netMonthlyIncomeAmount != null
@@ -67,21 +72,52 @@ export function SensitivityPanel({
 
   const userSavingsUF = currentSavingsUF > 0 ? currentSavingsUF : undefined;
 
+  function handleTabKeyDown(index: number, event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const nextIndex = (index + direction + tabs.length) % tabs.length;
+    setActiveTab(nextIndex);
+    tabRefs.current[nextIndex]?.focus();
+  }
+
   function renderContent() {
+    if (activeTab === 0) {
+      return isTargetMode ? (
+        <TargetTermComparisonPanel
+          data={targetTermData}
+          currentTerm={input.termYears}
+          ufValueCLP={input.ufValueCLP}
+          userIncomeUF={userIncomeUF}
+        />
+      ) : (
+        <TermComparisonPanel data={termMaxData} currentTerm={input.termYears} ufValueCLP={input.ufValueCLP} />
+      );
+    }
+
+    if (activeTab === 1) {
+      return isTargetMode ? (
+        <PieDownPaymentPanel
+          data={pieRateData}
+          currentRate={input.annualRatePct}
+          currentPiePct={input.downPaymentPct}
+          targetPropertyUF={targetPropertyUF ?? 0}
+          maxFinancingPct={input.maxFinancingPct}
+          ufValueCLP={input.ufValueCLP}
+          userIncomeUF={userIncomeUF}
+        />
+      ) : (
+        <SavingsSensitivityPanel
+          currentSavingsUF={currentSavingsUF}
+          ufValueCLP={input.ufValueCLP}
+          maxFinancingPct={input.maxFinancingPct}
+          maxPropertyByIncomeUF={maxPropertyByIncomeUF}
+        />
+      );
+    }
+
     if (isTargetMode) {
-      if (activeTab === 0) {
-        return (
-          <PieDownPaymentPanel
-            data={pieRateData}
-            currentRate={input.annualRatePct}
-            currentPiePct={input.downPaymentPct}
-            targetPropertyUF={targetPropertyUF ?? 0}
-            maxFinancingPct={input.maxFinancingPct}
-            ufValueCLP={input.ufValueCLP}
-            userIncomeUF={userIncomeUF}
-          />
-        );
-      }
       return (
         <RateComparisonPanel
           data={rateData}
@@ -92,27 +128,6 @@ export function SensitivityPanel({
       );
     }
 
-    // income mode
-    if (activeTab === 0) {
-      return (
-        <TermComparisonPanel
-          data={termMaxData}
-          currentTerm={input.termYears}
-          ufValueCLP={input.ufValueCLP}
-        />
-      );
-    }
-    if (activeTab === 1) {
-      return (
-        <SavingsSensitivityPanel
-          currentSavingsUF={currentSavingsUF}
-          ufValueCLP={input.ufValueCLP}
-          maxFinancingPct={input.maxFinancingPct}
-          maxPropertyByIncomeUF={maxPropertyByIncomeUF}
-        />
-      );
-    }
-    // activeTab === 2
     return (
       <Suspense fallback={<ChartLoading />}>
         <RateMaxPropertyChart data={rateMaxData} currentRate={input.annualRatePct} />
@@ -122,20 +137,28 @@ export function SensitivityPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-        <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50">
-          {tabs.map((t, i) => (
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50" role="tablist" aria-label="Sensibilidades">
+          {tabs.map((tab, index) => (
             <button
-              key={t}
+              key={tab}
+              ref={(element) => {
+                tabRefs.current[index] = element;
+              }}
+              id={`sensitivity-tab-${index}`}
+              role="tab"
+              aria-selected={activeTab === index}
+              aria-controls={`sensitivity-panel-${index}`}
               type="button"
-              onClick={() => setActiveTab(i)}
-              className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-colors ${
-                activeTab === i
-                  ? "border-b-2 border-blue-500 text-blue-600 bg-white"
+              onClick={() => setActiveTab(index)}
+              onKeyDown={(event) => handleTabKeyDown(index, event)}
+              className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400 ${
+                activeTab === index
+                  ? "border-b-2 border-blue-500 bg-white text-blue-600"
                   : "text-slate-500 hover:text-slate-700"
               }`}
             >
-              {t}
+              {tab}
             </button>
           ))}
         </div>
@@ -147,12 +170,14 @@ export function SensitivityPanel({
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                 Este panel falló al cargar. El resto del simulador sigue disponible.
                 {error?.message && (
-                  <div className="mt-2 font-mono text-xs text-amber-900 break-words">{error.message}</div>
+                  <div className="mt-2 break-words font-mono text-xs text-amber-900">{error.message}</div>
                 )}
               </div>
             )}
           >
-            {renderContent()}
+            <div id={`sensitivity-panel-${activeTab}`} role="tabpanel" aria-labelledby={`sensitivity-tab-${activeTab}`}>
+              {renderContent()}
+            </div>
           </ErrorBoundary>
         </div>
       </div>
@@ -160,8 +185,8 @@ export function SensitivityPanel({
       <div>
         <button
           type="button"
-          onClick={() => setShowTable((v) => !v)}
-          className="text-sm text-blue-600 hover:underline font-medium"
+          onClick={() => setShowTable((value) => !value)}
+          className="text-sm font-medium text-blue-600 hover:underline"
         >
           {showTable ? "Ocultar tabla de escenarios" : "Ver tabla de escenarios"}
         </button>
@@ -173,6 +198,10 @@ export function SensitivityPanel({
               highlightPropertyUF={highlightPropertyUF}
               userIncomeUF={userIncomeUF}
               userSavingsUF={userSavingsUF}
+              currentPiePct={input.downPaymentPct}
+              effectivePiePct={Math.max(input.downPaymentPct, 100 - input.maxFinancingPct)}
+              termYears={input.termYears}
+              bankName={selectedBankName}
             />
           </div>
         )}

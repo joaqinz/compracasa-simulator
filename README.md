@@ -2,6 +2,13 @@
 
 Interactive mortgage affordability simulator for Chile, built with React, TypeScript, and Vite.
 
+This project is framed around a simple product question:
+
+- one user starts from income and asks "What can I afford?"
+- another starts from a target property and asks "What do I need to make this work?"
+
+The simulator supports both mental models in a single interface and explains which constraint is actually binding: income, down payment, or bank policy.
+
 The app helps a user estimate:
 
 - how much property they can realistically afford
@@ -27,6 +34,21 @@ It is designed to be published as a public static webpage and works well as a pe
 - Charts and scenario tables for quick comparisons
 - Shareable scenarios through URL parameters
 - Static frontend deployment with no required backend for v1
+
+## Case Study Angle
+
+This app is designed to be portfolio-friendly, not just calculator-correct.
+
+- `Pedro` flow: "Sé cuánto gano"
+  - Starts with net income and savings
+  - Learns the maximum realistic property price
+  - Sees whether income or down payment is the true bottleneck
+- `José` flow: "Sé el precio que quiero"
+  - Starts with a target property value
+  - Sees required income, required down payment, and any current gaps
+  - Explores whether better rate, more down payment, or longer term would close the gap
+
+The main product insight is the binding-constraint message. Instead of only showing numbers, the simulator explains why the scenario tops out where it does.
 
 ## Tech Stack
 
@@ -60,6 +82,19 @@ The simulator combines:
 - bank preset data stored in `src/data/bankPresets.json`
 
 The frontend is fully static. At runtime, it fetches UF data in the browser and computes all results client-side.
+
+## Calculation Logic
+
+Three checks drive most of the experience:
+
+1. Dividend formula:
+   - `D = P · [r(1+r)^n] / [(1+r)^n − 1]`
+2. Debt burden rule:
+   - `dividendo + seguro ≤ ingreso · carga financiera máxima`
+3. Financing rule:
+   - `crédito ≤ propiedad · financiamiento máximo`
+
+Those checks are what allow the UI to explain whether the active constraint is income, down payment, or the selected bank policy.
 
 ## Data Sources
 

@@ -76,13 +76,7 @@ export function runScenario(input: ScenarioInput): ScenarioOutput {
       : maxPropertyByIncomeUF ?? maxPropertyBySavingsUF;
 
   if (input.mode === "income") {
-    const bindingConstraint = deriveBindingConstraint(
-      maxPropertyByIncomeUF,
-      maxPropertyBySavingsUF,
-      undefined,
-      effectiveEquityRatio,
-      maxFinancingPct / 100
-    );
+    const bindingConstraint = deriveBindingConstraint(maxPropertyByIncomeUF, maxPropertyBySavingsUF, undefined);
 
     return {
       maxPropertyByIncomeUF,
@@ -123,13 +117,7 @@ export function runScenario(input: ScenarioInput): ScenarioOutput {
     (incomeGapUF == null || incomeGapUF <= 0) &&
     (savingsGapUF == null || savingsGapUF <= 0);
 
-  const bindingConstraint = deriveBindingConstraint(
-    maxPropertyByIncomeUF,
-    maxPropertyBySavingsUF,
-    propertyPriceUF,
-    effectiveEquityRatio,
-    maxFinancingPct / 100
-  );
+  const bindingConstraint = deriveBindingConstraint(maxPropertyByIncomeUF, maxPropertyBySavingsUF, propertyPriceUF);
 
   return {
     propertyPriceUF,
@@ -151,9 +139,7 @@ export function runScenario(input: ScenarioInput): ScenarioOutput {
 function deriveBindingConstraint(
   byIncome: number | undefined,
   bySavings: number | undefined,
-  target: number | undefined,
-  _effectiveEquityRatio: number,
-  _maxFinancingRatio: number
+  target: number | undefined
 ): BindingConstraint {
   if (byIncome == null && bySavings == null) return "none";
 

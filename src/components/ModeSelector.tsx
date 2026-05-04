@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type { ScenarioMode } from "@/types/finance";
 import clsx from "clsx";
 
@@ -6,33 +7,63 @@ type Props = {
   onChange: (mode: ScenarioMode) => void;
 };
 
-const modes: { id: ScenarioMode; title: string; subtitle: string; icon: string }[] = [
-  { id: "income",          title: "Sé cuánto gano",          subtitle: "¿Qué propiedad puedo pagar con mi ingreso?", icon: "💰" },
-  { id: "target_property", title: "Sé el precio que quiero", subtitle: "¿Cuánto necesito ganar o ahorrar para esto?", icon: "🏡" },
+const modes: { id: ScenarioMode; title: string; subtitle: string; badge: string }[] = [
+  {
+    id: "income",
+    title: "Sé cuánto gano",
+    subtitle: "¿Qué propiedad puedo pagar con mi ingreso?",
+    badge: "Ingreso",
+  },
+  {
+    id: "target_property",
+    title: "Sé el precio que quiero",
+    subtitle: "¿Cuánto necesito ganar o ahorrar para esto?",
+    badge: "Objetivo",
+  },
 ];
 
 export function ModeSelector({ mode, onChange }: Props) {
+  const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  function handleKeyDown(index: number, event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const nextIndex = (index + direction + modes.length) % modes.length;
+    buttonRefs.current[nextIndex]?.focus();
+    onChange(modes[nextIndex].id);
+  }
+
   return (
     <div>
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">¿Qué sabes hoy?</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {modes.map((m) => (
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">¿Qué sabes hoy?</p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="tablist" aria-label="Modo del simulador">
+        {modes.map((entry, index) => (
           <button
-            key={m.id}
+            key={entry.id}
+            ref={(element) => {
+              buttonRefs.current[index] = element;
+            }}
             type="button"
-            onClick={() => onChange(m.id)}
+            role="tab"
+            aria-selected={mode === entry.id}
+            onClick={() => onChange(entry.id)}
+            onKeyDown={(event) => handleKeyDown(index, event)}
             className={clsx(
-              "rounded-xl border-2 px-4 py-3 text-left transition-all",
-              mode === m.id
+              "rounded-xl border-2 px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-blue-400",
+              mode === entry.id
                 ? "border-blue-500 bg-blue-50 shadow-sm"
                 : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/40"
             )}
           >
-            <span className="text-xl">{m.icon}</span>
-            <p className={clsx("font-semibold text-sm mt-1", mode === m.id ? "text-blue-700" : "text-slate-800")}>
-              {m.title}
+            <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+              {entry.badge}
+            </span>
+            <p className={clsx("mt-2 text-sm font-semibold", mode === entry.id ? "text-blue-700" : "text-slate-800")}>
+              {entry.title}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5 leading-tight">{m.subtitle}</p>
+            <p className="mt-0.5 text-xs leading-tight text-slate-500">{entry.subtitle}</p>
           </button>
         ))}
       </div>

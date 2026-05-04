@@ -6,40 +6,58 @@ export function GlossarySection() {
   const [openTerms, setOpenTerms] = useState<Set<string>>(new Set());
 
   function toggleTerm(id: string) {
-    setOpenTerms((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+    setOpenTerms((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-slate-200">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        aria-expanded={open}
+        aria-controls="financial-glossary-panel"
       >
         <span>Glosario de términos financieros</span>
-        <span className="text-slate-400 text-xs">{open ? "▲" : "▼"}</span>
+        <span className="text-xs text-slate-400">{open ? "Ocultar" : "Ver términos"}</span>
       </button>
+
       {open && (
-        <div className="divide-y divide-slate-100">
-          {glossary.map((term) => (
-            <div key={term.id}>
-              <button
-                type="button"
-                onClick={() => toggleTerm(term.id)}
-                className="w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-slate-50"
-              >
-                <span className="font-medium text-slate-700">{term.term}</span>
-                <span className="text-slate-400 text-xs ml-2">{openTerms.has(term.id) ? "▲" : "▼"}</span>
-              </button>
-              {openTerms.has(term.id) && (
-                <p className="px-4 pb-3 text-xs text-slate-600 leading-relaxed">{term.definition}</p>
-              )}
-            </div>
-          ))}
+        <div id="financial-glossary-panel" className="divide-y divide-slate-100 bg-white">
+          {glossary.map((term) => {
+            const isOpen = openTerms.has(term.id);
+
+            return (
+              <div key={term.id}>
+                <button
+                  type="button"
+                  onClick={() => toggleTerm(term.id)}
+                  className="flex w-full items-center justify-between px-4 py-3 text-left text-sm hover:bg-slate-50"
+                  aria-expanded={isOpen}
+                  aria-controls={`glossary-term-${term.id}`}
+                >
+                  <span className="font-medium text-slate-700">{term.term}</span>
+                  <span className="ml-2 text-xs text-slate-400">{isOpen ? "Ocultar" : "Ver"}</span>
+                </button>
+                {isOpen && (
+                  <p
+                    id={`glossary-term-${term.id}`}
+                    className="px-4 pb-3 text-xs leading-relaxed text-slate-600"
+                  >
+                    {term.definition}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

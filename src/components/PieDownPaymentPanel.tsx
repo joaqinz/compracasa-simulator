@@ -12,6 +12,14 @@ type Props = {
   userIncomeUF?: number;
 };
 
+type GroupedRow = {
+  minRequestedPct: number;
+  maxRequestedPct: number;
+  effectivePct: number;
+  representative: PieRatePoint;
+  isCurrent: boolean;
+};
+
 export function PieDownPaymentPanel({
   data,
   currentRate,
@@ -23,70 +31,81 @@ export function PieDownPaymentPanel({
 }: Props) {
   if (targetPropertyUF <= 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 text-center">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
         Ingresa el precio de la propiedad para ver este análisis.
       </div>
     );
   }
 
   const filtered = data
-    .filter((d) => Math.abs(d.annualRatePct - currentRate) < 0.05)
+    .filter((point) => Math.abs(point.annualRatePct - currentRate) < 0.05)
     .sort((a, b) => a.downPaymentPct - b.downPaymentPct);
 
   if (filtered.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 text-center">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
         No hay datos disponibles.
       </div>
     );
   }
 
   const hasIncome = userIncomeUF != null;
-  const firstFeasibleIdx = hasIncome
-    ? filtered.findIndex((d) => d.feasible)
-    : -1;
+  const bankMinPiePct = 100 - maxFinancingPct;
+  const groupedRows: GroupedRow[] = [];
 
-  let minSavingsMsg: { text: string; ok: boolean } | null = null;
+  for (const point of filtered) {
+    const effectivePct = Math.max(point.downPaymentPct, bankMinPiePct);
+    const currentGroup = groupedRows[groupedRows.length - 1];
+
+    if (currentGroup && Math.abs(currentGroup.effectivePct - effectivePct) < 0.01) {
+      currentGroup.maxRequestedPct = point.downPaymentPct;
+      currentGroup.isCurrent = currentGroup.isCurrent || Math.abs(point.downPaymentPct - currentPiePct) < 1;
+      continue;
+    }
+
+    groupedRows.push({
+      minRequestedPct: point.downPaymentPct,
+      maxRequestedPct: point.downPaymentPct,
+      effectivePct,
+      representative: point,
+      isCurrent: Math.abs(point.downPaymentPct - currentPiePct) < 1,
+    });
+  }
+
+  const firstFeasibleIdx = hasIncome ? groupedRows.findIndex((row) => row.representative.feasible) : -1;
+
+  let minSavingsMessage: { text: string; ok: boolean } | null = null;
   if (hasIncome) {
     if (firstFeasibleIdx < 0) {
-      minSavingsMsg = {
-        text: "Con tu ingreso actual, la propiedad no es factible en ningún nivel de pie.",
+      minSavingsMessage = {
+        text: "Con tu ingreso actual, la propiedad no es factible en ningún nivel de pie evaluado.",
         ok: false,
       };
-    } else if (firstFeasibleIdx === 0) {
-      minSavingsMsg = {
-        text: "Con tu ingreso actual, la propiedad es factible desde el pie mínimo requerido.",
-        ok: true,
-      };
     } else {
-      const minPct = filtered[firstFeasibleIdx].downPaymentPct;
-      const effectiveEquity = Math.max(minPct / 100, 1 - maxFinancingPct / 100);
-      const minSavingsUF = targetPropertyUF * effectiveEquity;
-      minSavingsMsg = {
-        text: `Necesitas al menos ${formatUF(minSavingsUF, 0)} (${formatCLP(minSavingsUF * ufValueCLP)}) de pie para que el dividendo sea factible con tu ingreso.`,
+      const firstFeasible = groupedRows[firstFeasibleIdx];
+      const minSavingsUF = targetPropertyUF * (firstFeasible.effectivePct / 100);
+      minSavingsMessage = {
+        text:
+          firstFeasibleIdx === 0
+            ? "Con tu ingreso actual, la propiedad es factible desde el pie mínimo requerido."
+            : `Necesitas al menos ${formatUF(minSavingsUF, 0)} (${formatCLP(minSavingsUF * ufValueCLP)}) de pie para que el dividendo sea factible con tu ingreso.`,
         ok: true,
       };
     }
   }
 
-  const bankMinPiePct = 100 - maxFinancingPct;
-  const hasEffectiveOverride = filtered.some((d) => d.downPaymentPct < bankMinPiePct);
+  const hasCollapsedRows = groupedRows.some((row) => row.maxRequestedPct > row.minRequestedPct);
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs text-slate-500">
-        Cómo cambia el dividendo y la viabilidad según cuánto pie puedas aportar,
-        a la tasa actual y precio objetivo.
+        Cómo cambia el dividendo y la viabilidad según cuánto pie aportes, a la tasa actual y precio objetivo.
       </p>
-      {hasEffectiveOverride && (
-        <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-          El banco financia máximo el {maxFinancingPct}% del valor de la propiedad
-          (condición de <span className="font-medium">Financiamiento Máximo</span>),
-          por lo que el pie mínimo efectivo es{" "}
-          <span className="font-semibold">{bankMinPiePct}%</span>{" "}
-          independiente del % que indiques. Los montos de ahorro reflejan este mínimo cuando corresponde.
-        </p>
-      )}
+
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+        El banco financia máximo {maxFinancingPct}% del valor de la propiedad, así que el pie mínimo efectivo es{" "}
+        <span className="font-semibold">{bankMinPiePct}%</span>. Cuando indicas un porcentaje menor, el cálculo se ajusta automáticamente.
+      </p>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200">
         <table className="min-w-full text-xs">
@@ -94,37 +113,37 @@ export function PieDownPaymentPanel({
             <tr>
               <th className="px-3 py-2 text-right font-medium">Pie %</th>
               <th className="px-3 py-2 text-right font-medium">Ahorro necesario</th>
-              <th className="px-3 py-2 text-right font-medium">Dividendo mens.</th>
+              <th className="px-3 py-2 text-right font-medium">Dividendo mensual</th>
               <th className="px-3 py-2 text-right font-medium">Ingreso req.</th>
               {hasIncome && <th className="px-3 py-2 text-center font-medium">Estado</th>}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((d, i) => {
-              const isCurrent = Math.abs(d.downPaymentPct - currentPiePct) < 1;
-              const isFirstFeasible = hasIncome && i === firstFeasibleIdx && firstFeasibleIdx > 0;
-              const effectiveEquity = Math.max(d.downPaymentPct / 100, 1 - maxFinancingPct / 100);
-              const downPaymentUF = targetPropertyUF * effectiveEquity;
-              const incomeGap =
-                hasIncome && !d.feasible ? d.requiredIncomeUF - userIncomeUF! : 0;
+            {groupedRows.map((row, index) => {
+              const { representative } = row;
+              const downPaymentUF = targetPropertyUF * (row.effectivePct / 100);
+              const isFirstFeasible = hasIncome && index === firstFeasibleIdx && firstFeasibleIdx > 0;
+              const incomeGap = hasIncome && !representative.feasible ? representative.requiredIncomeUF - userIncomeUF : 0;
+              const label =
+                row.maxRequestedPct > row.minRequestedPct
+                  ? `${row.minRequestedPct}% - ${row.maxRequestedPct}%¹`
+                  : `${row.effectivePct}%`;
 
               return (
                 <tr
-                  key={d.downPaymentPct}
+                  key={`${row.minRequestedPct}-${row.maxRequestedPct}`}
                   className={clsx(
                     "border-t border-slate-100",
-                    isCurrent && "bg-blue-50",
-                    !isCurrent && d.feasible && hasIncome && "bg-emerald-50/30",
-                    !d.feasible && "bg-red-50/20"
+                    row.isCurrent && "bg-blue-50",
+                    !row.isCurrent && representative.feasible && hasIncome && "bg-emerald-50/30",
+                    !representative.feasible && "bg-red-50/20"
                   )}
                 >
                   <td className="px-3 py-2 text-right font-semibold">
-                    {d.downPaymentPct}%
-                    {isCurrent && (
-                      <span className="ml-1.5 text-[10px] text-blue-600 font-medium">← actual</span>
-                    )}
+                    {label}
+                    {row.isCurrent && <span className="ml-1.5 text-[10px] font-medium text-blue-600">actual</span>}
                     {isFirstFeasible && (
-                      <span className="ml-1.5 text-[10px] text-emerald-600 font-medium">← mín. factible</span>
+                      <span className="ml-1.5 text-[10px] font-medium text-emerald-600">mín. factible</span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -132,24 +151,22 @@ export function PieDownPaymentPanel({
                     <div className="text-[10px] text-slate-400">{formatCLP(downPaymentUF * ufValueCLP)}</div>
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <div>{formatUF(d.dividendUF, 2)}</div>
-                    <div className="text-[10px] text-slate-400">{formatCLP(d.dividendUF * ufValueCLP)}</div>
+                    <div>{formatUF(representative.dividendUF, 2)}</div>
+                    <div className="text-[10px] text-slate-400">{formatCLP(representative.dividendUF * ufValueCLP)}</div>
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <div>{formatUF(d.requiredIncomeUF, 2)}</div>
-                    <div className="text-[10px] text-slate-400">{formatCLP(d.requiredIncomeUF * ufValueCLP)}</div>
+                    <div>{formatUF(representative.requiredIncomeUF, 2)}</div>
+                    <div className="text-[10px] text-slate-400">{formatCLP(representative.requiredIncomeUF * ufValueCLP)}</div>
                   </td>
                   {hasIncome && (
                     <td className="px-3 py-2 text-center">
-                      {d.feasible ? (
-                        <span className="text-emerald-600 font-bold">✓</span>
+                      {representative.feasible ? (
+                        <span className="font-bold text-emerald-600">Sí</span>
                       ) : (
                         <div>
-                          <span className="text-red-500 font-bold">✗</span>
+                          <span className="font-bold text-red-500">No</span>
                           {incomeGap > 0 && (
-                            <div className="text-[10px] text-red-400 mt-0.5">
-                              +{formatCLP(incomeGap * ufValueCLP)}
-                            </div>
+                            <div className="mt-0.5 text-[10px] text-red-400">+{formatCLP(incomeGap * ufValueCLP)}</div>
                           )}
                         </div>
                       )}
@@ -162,14 +179,20 @@ export function PieDownPaymentPanel({
         </table>
       </div>
 
-      {minSavingsMsg && (
+      {hasCollapsedRows && (
+        <p className="text-[11px] text-slate-400">
+          ¹ El banco exige {bankMinPiePct}% pie mínimo; valores debajo se ajustan automáticamente.
+        </p>
+      )}
+
+      {minSavingsMessage && (
         <p
           className={clsx(
-            "text-xs rounded-lg px-3 py-2",
-            minSavingsMsg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+            "rounded-lg px-3 py-2 text-xs",
+            minSavingsMessage.ok ? "border border-emerald-200 bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
           )}
         >
-          {minSavingsMsg.text}
+          {minSavingsMessage.text}
         </p>
       )}
     </div>

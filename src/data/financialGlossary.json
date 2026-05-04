@@ -2,56 +2,66 @@
   {
     "id": "uf",
     "term": "UF (Unidad de Fomento)",
-    "definition": "Unidad de cuenta reajustable usada en Chile. Se reajusta diariamente según el IPC. Las propiedades y créditos hipotecarios suelen expresarse en UF para protegerse de la inflación."
+    "definition": "Unidad de cuenta reajustable usada en Chile. Se actualiza diariamente según la inflación y por eso propiedades y créditos hipotecarios suelen expresarse en UF."
+  },
+  {
+    "id": "ingreso-mensual-neto",
+    "term": "Ingreso mensual neto",
+    "definition": "Es el ingreso que realmente te queda al mes después de descuentos previsionales, salud e impuestos. Es la base que usan los bancos para medir cuánto dividendo puedes pagar."
+  },
+  {
+    "id": "precio-objetivo",
+    "term": "Precio de la propiedad objetivo",
+    "definition": "Es el valor de referencia de la propiedad que quieres evaluar. A partir de ese monto el simulador estima el pie, el crédito, el dividendo y la factibilidad."
   },
   {
     "id": "cae",
     "term": "CAE (Carga Anual Equivalente)",
-    "definition": "Indicador que resume el costo total anual de un crédito, incluyendo tasa de interés, gastos operacionales y seguros. Permite comparar objetivamente distintas ofertas de crédito hipotecario."
+    "definition": "Indicador que resume el costo total anual del crédito, incluyendo tasa, gastos operacionales y seguros. Sirve para comparar ofertas más allá de la tasa publicada."
   },
   {
     "id": "dividendo",
     "term": "Dividendo",
-    "definition": "Pago mensual del crédito hipotecario. Incluye amortización del capital, intereses y seguros. Es el monto que deberás pagar al banco cada mes durante el plazo del crédito."
+    "definition": "Pago mensual del crédito hipotecario. Incluye amortización del capital, intereses y seguros asociados."
   },
   {
     "id": "pie",
-    "term": "Pie (Pago inicial)",
-    "definition": "Monto que el comprador paga con recursos propios al momento de la compra. Generalmente corresponde al 10-20% del valor de la propiedad. El banco financia el resto mediante el crédito hipotecario."
+    "term": "Pie",
+    "definition": "Monto que aportas con recursos propios al momento de comprar. Mientras más alto sea el pie, menor será el crédito que debes pedir al banco."
   },
   {
     "id": "tasa",
-    "term": "Tasa de interés",
-    "definition": "Porcentaje anual que cobra el banco por el dinero prestado. Una tasa menor implica dividendos más bajos y menor costo total del crédito."
-  },
-  {
-    "id": "tasa-fija",
-    "term": "Tasa fija",
-    "definition": "Tasa de interés que no varía durante todo el plazo del crédito. Otorga certeza sobre el monto del dividendo mensual, independientemente de lo que ocurra en el mercado financiero."
+    "term": "Tasa anual",
+    "definition": "Porcentaje anual que cobra el banco por el dinero prestado. Una tasa menor reduce el dividendo mensual y el costo total del crédito."
   },
   {
     "id": "seguro-desgravamen",
-    "term": "Seguro de desgravamen",
-    "definition": "Seguro de vida asociado al crédito hipotecario. En caso de fallecimiento del deudor, liquida el saldo de la deuda. Su costo mensual está incluido en el dividendo total."
+    "term": "Seguro mensual (UF)",
+    "definition": "Costo mensual del seguro asociado al crédito hipotecario, normalmente expresado en UF. Suele incluir desgravamen y, según el banco, otras coberturas obligatorias."
   },
   {
     "id": "seguro-incendio-sismo",
     "term": "Seguro de incendio y sismo",
-    "definition": "Seguro obligatorio asociado a créditos hipotecarios en Chile. Cubre daños estructurales por incendio o terremoto. Su prima mensual se incluye en el dividendo total."
+    "definition": "Seguro obligatorio en muchos hipotecarios en Chile. Cubre daños estructurales a la propiedad y se incorpora al costo mensual del crédito."
   },
   {
     "id": "carga-financiera",
-    "term": "Carga financiera",
-    "definition": "Proporción del ingreso mensual destinada al pago de deudas. Los bancos chilenos generalmente exigen que el dividendo hipotecario no supere el 25% del ingreso neto mensual."
+    "term": "Carga financiera máxima",
+    "definition": "Porcentaje del ingreso mensual que el banco acepta destinar al pago de deudas. En hipotecarios suele exigirse que dividendo más seguros no supere cerca de 25% del ingreso neto."
   },
   {
     "id": "financiamiento-maximo",
     "term": "Financiamiento máximo",
-    "definition": "Porcentaje máximo del valor de la propiedad que el banco está dispuesto a prestar. Si el financiamiento máximo es 80%, el comprador debe aportar al menos el 20% como pie."
+    "definition": "Porcentaje máximo del valor de la propiedad que el banco está dispuesto a prestar. Si el banco financia 80%, el 20% restante debe salir de tu pie."
   },
   {
     "id": "plazo",
     "term": "Plazo del crédito",
-    "definition": "Número de años en que se paga el crédito hipotecario. Los plazos más comunes en Chile son 15, 20, 25 y 30 años. Un plazo mayor reduce el dividendo mensual, pero aumenta el costo total del crédito."
+    "definition": "Cantidad de años en que pagarás el crédito hipotecario. Un plazo más largo baja el dividendo mensual, pero aumenta los intereses totales pagados."
+  },
+  {
+    "id": "codeudor",
+    "term": "Co-deudor",
+    "definition": "Persona que presenta ingresos junto contigo y comparte la responsabilidad del crédito. Puede ayudar a mejorar la factibilidad si el banco acepta sumar ambos ingresos."
   }
 ]

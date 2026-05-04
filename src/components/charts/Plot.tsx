@@ -1,10 +1,18 @@
+import type { ComponentType } from "react";
 import createPlotlyComponentModule from "react-plotly.js/factory";
 import Plotly from "plotly.js-dist-min";
 
-const createPlotlyComponentSource = createPlotlyComponentModule as any;
-const createPlotlyComponent =
+type PlotlyComponentProps = Record<string, unknown>;
+type PlotlyFactory = (plotly: typeof Plotly) => ComponentType<PlotlyComponentProps>;
+type PlotlyFactoryModule = {
+  default: PlotlyFactory;
+};
+
+const createPlotlyComponentSource = createPlotlyComponentModule as unknown;
+
+const createPlotlyComponent: PlotlyFactory =
   typeof createPlotlyComponentSource === "function"
-    ? createPlotlyComponentSource
-    : createPlotlyComponentSource.default;
+    ? (createPlotlyComponentSource as PlotlyFactory)
+    : (createPlotlyComponentSource as PlotlyFactoryModule).default;
 
 export const Plot = createPlotlyComponent(Plotly);

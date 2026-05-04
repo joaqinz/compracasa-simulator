@@ -99,6 +99,13 @@ export type RatePoint = {
   dividendUF: number;
 };
 
+export type TargetTermPoint = {
+  termYears: number;
+  requiredIncomeUF: number;
+  dividendUF: number;
+  feasible: boolean;
+};
+
 export function generateRateSensitivity(
   baseInput: ScenarioInput,
   rateOffsets: number[],
@@ -119,6 +126,36 @@ export function generateRateSensitivity(
       requiredIncomeUF: out.requiredIncomeUF ?? 0,
       requiredIncomeCLP: (out.requiredIncomeUF ?? 0) * baseInput.ufValueCLP,
       dividendUF: out.fullMonthlyDividendUF ?? 0,
+    };
+  });
+}
+
+export function generateTargetTermSensitivity(
+  baseInput: ScenarioInput,
+  terms: number[],
+  targetPropertyUF: number
+): TargetTermPoint[] {
+  const incomeUF =
+    baseInput.netMonthlyIncomeAmount != null
+      ? baseInput.netMonthlyIncomeAmount /
+        (baseInput.netMonthlyIncomeUnit === "CLP" ? baseInput.ufValueCLP : 1)
+      : undefined;
+
+  return terms.map((termYears) => {
+    const input: ScenarioInput = {
+      ...baseInput,
+      mode: "target_property",
+      targetPropertyAmount: targetPropertyUF,
+      targetPropertyUnit: "UF",
+      termYears,
+    };
+    const out = runScenario(input);
+
+    return {
+      termYears,
+      requiredIncomeUF: out.requiredIncomeUF ?? 0,
+      dividendUF: out.fullMonthlyDividendUF ?? 0,
+      feasible: incomeUF != null ? incomeUF >= (out.requiredIncomeUF ?? 0) : true,
     };
   });
 }
@@ -259,18 +296,24 @@ export function generateSensitivityTable(
     baseInput.downPaymentPct / 100,
     1 - baseInput.maxFinancingPct / 100
   );
+
+  const incomeUF =
+    baseInput.netMonthlyIncomeAmount != null
+      ? baseInput.netMonthlyIncomeAmount /
+        (baseInput.netMonthlyIncomeUnit === "CLP" ? baseInput.ufValueCLP : 1)
+      : undefined;
+
+  const savingsUF =
+    baseInput.savingsAmount != null
+      ? baseInput.savingsAmount / (baseInput.savingsUnit === "CLP" ? baseInput.ufValueCLP : 1)
+      : undefined;
+
   return propertyPrices.map((price) => {
     const dp = calculateDownPaymentUF(price, effectiveEquityRatio * 100);
     const loan = calculateLoanAmountUF(price, effectiveEquityRatio * 100);
     const base = calculateMonthlyPaymentUF(loan, baseInput.annualRatePct, baseInput.termYears);
     const full = calculateFullDividendUF(base, baseInput.monthlyInsuranceUF);
     const req = calculateRequiredIncomeUF(full, baseInput.maxDividendIncomeRatioPct);
-
-    const incomeUF =
-      baseInput.netMonthlyIncomeAmount != null
-        ? baseInput.netMonthlyIncomeAmount /
-          (baseInput.netMonthlyIncomeUnit === "CLP" ? baseInput.ufValueCLP : 1)
-        : undefined;
 
     return {
       propertyPriceUF: price,
@@ -279,7 +322,9 @@ export function generateSensitivityTable(
       loanAmountUF: loan,
       fullDividendUF: full,
       requiredIncomeUF: req,
-      feasible: incomeUF != null ? incomeUF >= req : true,
+      feasible:
+        (incomeUF == null || incomeUF >= req) &&
+        (savingsUF == null || savingsUF >= dp),
     };
   });
 }

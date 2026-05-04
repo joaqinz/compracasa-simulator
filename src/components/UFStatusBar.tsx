@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { UFMetadata } from "@/types/finance";
 
 type Props = {
@@ -8,15 +8,30 @@ type Props = {
   onManualOverride: (value: number) => void;
 };
 
+function parseMetadataDate(dateString: string | undefined) {
+  if (!dateString) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return new Date(`${dateString}T00:00:00`);
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+    const [day, month, year] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  return null;
+}
+
 export function UFStatusBar({ metadata, loading, error, onManualOverride }: Props) {
   const [manualInput, setManualInput] = useState("");
   const [showManual, setShowManual] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const v = parseFloat(manualInput.replace(",", "."));
-    if (!isNaN(v) && v > 0) {
-      onManualOverride(v);
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const value = parseFloat(manualInput.replace(",", "."));
+    if (!Number.isNaN(value) && value > 0) {
+      onManualOverride(value);
       setShowManual(false);
     }
   }
@@ -25,43 +40,59 @@ export function UFStatusBar({ metadata, loading, error, onManualOverride }: Prop
     ? new Intl.NumberFormat("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(metadata.valueCLP)
     : null;
 
+  const freshness = useMemo(() => {
+    const parsedDate = parseMetadataDate(metadata?.date);
+    if (!parsedDate) return { stale: metadata?.source === "Fallback", daysOld: null };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    parsedDate.setHours(0, 0, 0, 0);
+
+    const diffMs = today.getTime() - parsedDate.getTime();
+    const daysOld = Math.max(0, Math.round(diffMs / 86400000));
+    return { stale: daysOld > 1 || metadata?.source === "Fallback", daysOld };
+  }, [metadata]);
+
   return (
-    <div className="bg-slate-800 text-slate-200 text-xs px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 bg-slate-800 px-4 py-2 text-xs text-slate-200">
       {loading && (
         <span className="flex items-center gap-1">
-          <span className="animate-spin inline-block w-3 h-3 border border-slate-400 border-t-transparent rounded-full" />
-          Obteniendo valor UF…
+          <span className="inline-block h-3 w-3 animate-spin rounded-full border border-slate-400 border-t-transparent" />
+          Obteniendo valor UF...
         </span>
       )}
 
       {!loading && metadata && !error && (
         <span className="flex items-center gap-1">
-          <span className={metadata.source === "Fallback" ? "text-amber-400" : "text-emerald-400"}>●</span>
-          UF {metadata.date}: <strong className="text-white ml-1">${ufFormatted}</strong>
-          <span className="text-slate-400 ml-1">
-            (Fuente: {
-              metadata.source === "SII"
-                ? "SII"
-                : metadata.source === "Mindicador"
-                  ? "mindicador.cl"
-                  : metadata.source === "Manual"
-                    ? "Manual"
-                    : "Valor de respaldo"
-            })
+          <span className={freshness.stale ? "text-amber-400" : "text-emerald-400"}>●</span>
+          UF {metadata.date}: <strong className="ml-1 text-white">${ufFormatted}</strong>
+          <span className="ml-1 text-slate-400">
+            (Fuente:{" "}
+            {metadata.source === "SII"
+              ? "SII"
+              : metadata.source === "Mindicador"
+                ? "mindicador.cl"
+                : metadata.source === "Manual"
+                  ? "Manual"
+                  : "Valor de respaldo"}
+            )
           </span>
+          {freshness.stale && (
+            <span className="ml-1 text-amber-300">
+              valor del {metadata.date}, podría estar desactualizado
+            </span>
+          )}
         </span>
       )}
 
       {!loading && (error || metadata?.source === "Fallback") && (
-        <span className="text-amber-300 flex items-center gap-1">
-          ⚠ No se pudo obtener UF automáticamente.
-        </span>
+        <span className="flex items-center gap-1 text-amber-300">No se pudo obtener la UF automáticamente.</span>
       )}
 
       {!showManual ? (
         <button
           type="button"
-          className="text-slate-400 hover:text-white underline"
+          className="text-slate-400 underline hover:text-white"
           onClick={() => setShowManual(true)}
         >
           {metadata?.source === "Manual" ? "Cambiar UF" : "Ingresar UF manualmente"}
@@ -71,16 +102,16 @@ export function UFStatusBar({ metadata, loading, error, onManualOverride }: Prop
           <input
             type="text"
             inputMode="decimal"
-            className="bg-slate-700 text-white text-xs px-2 py-1 rounded border border-slate-500 w-28 focus:outline-none focus:border-blue-400"
+            className="w-28 rounded border border-slate-500 bg-slate-700 px-2 py-1 text-xs text-white focus:border-blue-400 focus:outline-none"
             placeholder="ej. 40160,14"
             value={manualInput}
-            onChange={(e) => setManualInput(e.target.value)}
+            onChange={(event) => setManualInput(event.target.value)}
             autoFocus
           />
-          <button type="submit" className="text-blue-400 hover:text-blue-300 text-xs">
+          <button type="submit" className="text-xs text-blue-400 hover:text-blue-300">
             Aplicar
           </button>
-          <button type="button" className="text-slate-400 hover:text-white text-xs" onClick={() => setShowManual(false)}>
+          <button type="button" className="text-xs text-slate-400 hover:text-white" onClick={() => setShowManual(false)}>
             Cancelar
           </button>
         </form>

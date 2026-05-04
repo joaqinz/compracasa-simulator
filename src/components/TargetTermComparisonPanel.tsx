@@ -1,33 +1,36 @@
-import type { TermMaxPoint } from "@/lib/sensitivity";
-import { formatUF, formatCLP } from "@/lib/formatters";
+import type { TargetTermPoint } from "@/lib/sensitivity";
+import { formatCLP, formatUF } from "@/lib/formatters";
 import clsx from "clsx";
 
 type Props = {
-  data: TermMaxPoint[];
+  data: TargetTermPoint[];
   currentTerm: number;
   ufValueCLP: number;
+  userIncomeUF?: number;
 };
 
-export function TermComparisonPanel({ data, currentTerm, ufValueCLP }: Props) {
-  if (data.length === 0 || data.every((point) => point.maxPropertyUF === 0)) {
+export function TargetTermComparisonPanel({ data, currentTerm, ufValueCLP, userIncomeUF }: Props) {
+  if (data.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
-        Ingresa tu ingreso para ver cómo el plazo afecta lo que puedes comprar.
+        Ingresa el precio de la propiedad para ver cómo cambia el dividendo según el plazo.
       </div>
     );
   }
 
-  const maxValue = Math.max(...data.map((point) => point.maxPropertyUF));
+  const maxDividend = Math.max(...data.map((point) => point.dividendUF));
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs text-slate-500">
-        Propiedad máxima estimada según el plazo del crédito, manteniendo tu ingreso, tu pie y las condiciones del banco.
+        El plazo cambia el dividendo mensual y el ingreso requerido. Un plazo mayor baja la cuota, pero aumenta los
+        intereses totales pagados.
       </p>
+
       <div className="flex flex-col gap-3">
         {data.map((point) => {
           const isCurrent = point.termYears === currentTerm;
-          const widthPct = maxValue > 0 ? (point.maxPropertyUF / maxValue) * 100 : 0;
+          const widthPct = maxDividend > 0 ? (point.dividendUF / maxDividend) * 100 : 0;
 
           return (
             <div key={point.termYears} className="flex flex-col gap-1">
@@ -37,8 +40,8 @@ export function TermComparisonPanel({ data, currentTerm, ufValueCLP }: Props) {
                   {isCurrent && <span className="ml-1.5 text-[10px] font-semibold text-blue-600">actual</span>}
                 </span>
                 <span className={clsx("font-semibold", isCurrent ? "text-slate-900" : "text-slate-600")}>
-                  {formatUF(point.maxPropertyUF, 0)}
-                  <span className="ml-1.5 font-normal text-slate-400">{formatCLP(point.maxPropertyUF * ufValueCLP)}</span>
+                  {formatUF(point.dividendUF, 2)}
+                  <span className="ml-1.5 font-normal text-slate-400">{formatCLP(point.dividendUF * ufValueCLP)}</span>
                 </span>
               </div>
               <div className="h-6 w-full overflow-hidden rounded-full bg-slate-100">
@@ -50,15 +53,18 @@ export function TermComparisonPanel({ data, currentTerm, ufValueCLP }: Props) {
                   style={{ width: `${widthPct}%` }}
                 />
               </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <span>Ingreso requerido: {formatUF(point.requiredIncomeUF, 2)}</span>
+                {userIncomeUF != null && (
+                  <span className={point.feasible ? "font-medium text-emerald-600" : "font-medium text-amber-600"}>
+                    {point.feasible ? "Factible con tu ingreso" : "Todavía fuera de rango"}
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
-      {data.length >= 2 && (
-        <p className="border-t pt-2 text-[11px] text-slate-400">
-          Mayor plazo suele bajar el dividendo mensual, pero aumenta los intereses totales pagados.
-        </p>
-      )}
     </div>
   );
 }
